@@ -1,0 +1,450 @@
+/* ═══════════════════════════════════════════════════════════════════
+   AuraSynth Pro — Global Styles
+   Minimal dark-stage theme inspired by GestureSynth
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── CSS Variables ────────────────────────────────────────── */
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #0d0d1a;
+  --bg-panel: rgba(15, 15, 30, 0.85);
+  --bg-panel-solid: #111122;
+
+  --accent-cyan: #00ffcc;
+  --accent-magenta: #ff00ff;
+  --accent-purple: #7850ff;
+  --accent-gold: #ffaa00;
+  --accent-red: #ff3b3b;
+
+  --text-primary: #f0f0ff;
+  --text-secondary: #a0a0c0;
+  --text-muted: #606080;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(0, 255, 204, 0.2);
+
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --glass-bg: rgba(10, 10, 20, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 20px;
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+}
+
+/* ── Reset ────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Stage Container ──────────────────────────────────────── */
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.stage__video-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.stage__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror for selfie view */
+  opacity: 0.35;
+  filter: saturate(0.3) brightness(0.5);
+  transition: opacity var(--transition-normal);
+}
+
+.stage--active .stage__video {
+  opacity: 0.5;
+  filter: saturate(0.5) brightness(0.6);
+}
+
+.stage__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Overlay: Chord Display (center of screen) ────────────── */
+.chord-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.chord-display__name {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10vw, 8rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(0, 255, 204, 0.3))
+          drop-shadow(0 0 60px rgba(255, 0, 255, 0.15));
+  transition: all var(--transition-fast);
+  animation: chord-pulse 2s ease-in-out infinite;
+}
+
+@keyframes chord-pulse {
+  0%, 100% { filter: drop-shadow(0 0 30px rgba(0, 255, 204, 0.3)) drop-shadow(0 0 60px rgba(255, 0, 255, 0.15)); }
+  50% { filter: drop-shadow(0 0 50px rgba(0, 255, 204, 0.5)) drop-shadow(0 0 80px rgba(255, 0, 255, 0.25)); }
+}
+
+.chord-display__notes {
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+.chord-display__status {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+
+/* ── Top Control Bar ──────────────────────────────────────── */
+.control-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+.control-bar__left,
+.control-bar__center,
+.control-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-bar__logo {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Glass Button ─────────────────────────────────────────── */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.glass-btn:hover {
+  background: rgba(20, 20, 40, 0.8);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.1);
+}
+
+.glass-btn--active {
+  background: rgba(0, 255, 204, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+}
+
+.glass-btn--record {
+  background: rgba(255, 59, 59, 0.15);
+  border-color: rgba(255, 59, 59, 0.3);
+  color: var(--accent-red);
+}
+
+.glass-btn--record.glass-btn--active {
+  background: rgba(255, 59, 59, 0.25);
+  border-color: var(--accent-red);
+  animation: record-blink 1s ease-in-out infinite;
+}
+
+@keyframes record-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── Select (Key picker, etc.) ────────────────────────────── */
+.glass-select {
+  padding: 0.45rem 0.65rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 1.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300ffcc'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+}
+
+.glass-select:hover {
+  border-color: var(--border-glow);
+}
+
+.glass-select option {
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+}
+
+/* ── Bottom Bar ───────────────────────────────────────────── */
+.bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  gap: 0.75rem;
+}
+
+/* ── Hand Indicator ───────────────────────────────────────── */
+.hand-indicators {
+  position: absolute;
+  bottom: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  gap: 2rem;
+  pointer-events: none;
+}
+
+.hand-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0.3;
+  transition: opacity var(--transition-fast);
+}
+
+.hand-indicator--active {
+  opacity: 1;
+}
+
+.hand-indicator__icon {
+  font-size: 1.5rem;
+}
+
+.hand-indicator__label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hand-indicator--left .hand-indicator__label { color: var(--accent-cyan); }
+.hand-indicator--right .hand-indicator__label { color: var(--accent-magenta); }
+
+/* ── Splash / Start Screen ────────────────────────────────── */
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #0d0d2a 0%, #050510 70%);
+}
+
+.splash__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  animation: title-glow 3s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.3)); }
+  50% { filter: drop-shadow(0 0 40px rgba(120, 80, 255, 0.5)); }
+}
+
+.splash__subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+  text-align: center;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.splash__start-btn {
+  padding: 0.9rem 2.5rem;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-transform: uppercase;
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.2), 0 0 60px rgba(120, 80, 255, 0.1);
+}
+
+.splash__start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 50px rgba(0, 255, 204, 0.4), 0 0 80px rgba(120, 80, 255, 0.2);
+}
+
+.splash__start-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Visualizer Canvas ────────────────────────────────────── */
+.visualizer-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ── Loading spinner ──────────────────────────────────────── */
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .control-bar {
+    padding: 0.5rem 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .control-bar__logo {
+    font-size: 0.7rem;
+  }
+
+  .glass-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .glass-select {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .chord-display__name {
+    font-size: clamp(2.5rem, 12vw, 5rem);
+  }
+
+  .hand-indicators {
+    bottom: 3.5rem;
+    gap: 1.5rem;
+  }
+}
