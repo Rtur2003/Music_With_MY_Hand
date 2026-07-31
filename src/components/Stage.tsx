@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Stage Component
-   Full-screen camera video container + canvas visualizer layer
+   Full-screen visible camera video background + canvas visualizer layer
    ═══════════════════════════════════════════════════════════════════ */
 
 import React from 'react';
@@ -14,6 +14,7 @@ interface StageProps {
   rightHand: Landmark[] | null;
   analyser?: any;
   chordColor?: string;
+  showHandIndicators?: boolean;
   children?: React.ReactNode;
 }
 
@@ -24,12 +25,13 @@ export const Stage: React.FC<StageProps> = ({
   rightHand,
   analyser,
   chordColor,
+  showHandIndicators = true,
   children,
 }) => {
   return (
     <div ref={stageContainerRef} className="stage stage--active">
       <div className="stage__video-container">
-        <video ref={videoRef} className="stage__video" playsInline muted />
+        <video ref={videoRef} className="stage__video" autoPlay playsInline muted />
       </div>
 
       <HandCanvas
@@ -39,17 +41,19 @@ export const Stage: React.FC<StageProps> = ({
         chordColor={chordColor}
       />
 
-      {/* Hand detection indicators at bottom */}
-      <div className="hand-indicators">
-        <div className={`hand-indicator hand-indicator--left ${leftHand ? 'hand-indicator--active' : ''}`}>
-          <div className="hand-indicator__icon">🤚</div>
-          <div className="hand-indicator__label">Left Hand (Harmony)</div>
+      {/* Hand detection indicators (Only shown in Synth Mode to avoid overlap with Orchestra Visualizer) */}
+      {showHandIndicators && (
+        <div className="hand-indicators">
+          <div className={`hand-indicator hand-indicator--left ${leftHand ? 'hand-indicator--active' : ''}`}>
+            <div className="hand-indicator__icon">🤚</div>
+            <div className="hand-indicator__label">Left Hand (Harmony)</div>
+          </div>
+          <div className={`hand-indicator hand-indicator--right ${rightHand ? 'hand-indicator--active' : ''}`}>
+            <div className="hand-indicator__icon">✋</div>
+            <div className="hand-indicator__label">Right Hand (Expression)</div>
+          </div>
         </div>
-        <div className={`hand-indicator hand-indicator--right ${rightHand ? 'hand-indicator--active' : ''}`}>
-          <div className="hand-indicator__icon">✋</div>
-          <div className="hand-indicator__label">Right Hand (Expression)</div>
-        </div>
-      </div>
+      )}
 
       {children}
     </div>
