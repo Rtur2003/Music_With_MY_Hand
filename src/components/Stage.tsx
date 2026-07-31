@@ -1,17 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Stage Component
-   Full-screen visible camera video background + canvas visualizer layer
+   High performance persistent camera video background + canvas layer
    ═══════════════════════════════════════════════════════════════════ */
 
 import React from 'react';
 import { HandCanvas } from './HandCanvas';
-import type { Landmark } from '../tracking/useHandTracking';
+import type { TrackedHands } from '../tracking/useHandTracking';
 
 interface StageProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   stageContainerRef: React.RefObject<HTMLDivElement | null>;
-  leftHand: Landmark[] | null;
-  rightHand: Landmark[] | null;
+  handsRef: React.RefObject<TrackedHands>;
   analyser?: any;
   chordColor?: string;
   showHandIndicators?: boolean;
@@ -21,13 +20,15 @@ interface StageProps {
 export const Stage: React.FC<StageProps> = ({
   videoRef,
   stageContainerRef,
-  leftHand,
-  rightHand,
+  handsRef,
   analyser,
   chordColor,
   showHandIndicators = true,
   children,
 }) => {
+  const leftHand = handsRef.current?.left;
+  const rightHand = handsRef.current?.right;
+
   return (
     <div ref={stageContainerRef} className="stage stage--active">
       <div className="stage__video-container">
@@ -35,13 +36,12 @@ export const Stage: React.FC<StageProps> = ({
       </div>
 
       <HandCanvas
-        leftHand={leftHand}
-        rightHand={rightHand}
+        handsRef={handsRef}
         analyser={analyser}
         chordColor={chordColor}
       />
 
-      {/* Hand detection indicators (Only shown in Synth Mode to avoid overlap with Orchestra Visualizer) */}
+      {/* Hand detection indicators (Only shown in Synth Mode to avoid overlap) */}
       {showHandIndicators && (
         <div className="hand-indicators">
           <div className={`hand-indicator hand-indicator--left ${leftHand ? 'hand-indicator--active' : ''}`}>

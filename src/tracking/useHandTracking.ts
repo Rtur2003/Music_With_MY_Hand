@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
-   AuraSynth Pro — useHandTracking React Hook
-   Fixes MediaPipe WebGL WASM freeze by checking video dimensions (videoWidth/videoHeight)
-   and providing strictly monotonic timestamps to detectForVideo
+   AuraSynth Pro — Lightweight High-Performance useHandTracking Hook
+   Uses Ref-based landmark storage to eliminate 60-120 React re-renders/sec
    ═══════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef, useState } from 'react';
@@ -30,8 +29,6 @@ export function useHandTracking(
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const rafRef = useRef(0);
   const lastTimestampRef = useRef(-1);
-
-  const [handsState, setHandsState] = useState<TrackedHands>({ left: null, right: null });
 
   useEffect(() => {
     if (!enabled) return;
@@ -100,14 +97,11 @@ export function useHandTracking(
           const v = videoRef.current;
           const lm = landmarkerRef.current;
 
-          // Crucial fix: Ensure video has valid readyState and non-zero dimensions
-          // Prevents MediaPipe NORM_RECT without IMAGE_DIMENSIONS WASM WebGL freeze
           if (!v || !lm || v.readyState < 2 || v.videoWidth === 0 || v.videoHeight === 0) {
             rafRef.current = requestAnimationFrame(detect);
             return;
           }
 
-          // Use video.currentTime in milliseconds as strictly monotonic timestamp
           const nowMs = Math.round(v.currentTime * 1000);
           if (nowMs > lastTimestampRef.current && nowMs > 0) {
             lastTimestampRef.current = nowMs;
@@ -123,8 +117,6 @@ export function useHandTracking(
                   const landmarks = result.landmarks[i] as Landmark[];
                   const label = result.handedness[i]?.[0]?.categoryName;
 
-                  // MediaPipe labels mirrored in selfie view:
-                  // "Right" label = user's LEFT hand
                   if (label === 'Right') {
                     left = landmarks;
                   } else if (label === 'Left') {
@@ -133,9 +125,8 @@ export function useHandTracking(
                 }
               }
 
-              const nextHands = { left, right };
-              handsRef.current = nextHands;
-              setHandsState(nextHands);
+              // Update Ref only (0 React re-renders per second -> 0% CPU freeze!)
+              handsRef.current = { left, right };
             } catch (err) {
               console.warn('[HandTracker] Detection skipped frame:', err);
             }
@@ -165,5 +156,5 @@ export function useHandTracking(
     };
   }, [enabled, videoRef]);
 
-  return { status, error, handsRef, handsState };
+  return { status, error, handsRef };
 }

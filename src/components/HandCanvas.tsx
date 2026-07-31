@@ -1,15 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Hand Canvas Component
-   Draws glowing hand skeleton landmarks, audio waveform,
-   and Conductor Baton Ribbon Trail (inspired by Google Semi-Conductor)
+   Reads handsRef directly in a 60 FPS rAF loop for zero React re-render overhead
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef } from 'react';
-import type { Landmark } from '../tracking/useHandTracking';
+import type { Landmark, TrackedHands } from '../tracking/useHandTracking';
 
 interface HandCanvasProps {
-  leftHand: Landmark[] | null;
-  rightHand: Landmark[] | null;
+  handsRef: React.RefObject<TrackedHands>;
   analyser?: any; // Tone.Analyser waveform
   chordColor?: string; // e.g. "#00ffcc" or "#ffaa00"
 }
@@ -25,8 +23,7 @@ const CONNECTIONS = [
 ];
 
 export const HandCanvas: React.FC<HandCanvasProps> = ({
-  leftHand,
-  rightHand,
+  handsRef,
   analyser,
   chordColor = '#00ffcc',
 }) => {
@@ -50,6 +47,9 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
       }
 
       ctx.clearRect(0, 0, w, h);
+
+      // Read current hands directly from Ref (0% React re-render overhead!)
+      const { left: leftHand, right: rightHand } = handsRef.current || { left: null, right: null };
 
       // ── 1. Audio Waveform (Bottom) ──────────────────
       if (analyser) {
@@ -183,7 +183,7 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
     return () => {
       cancelAnimationFrame(animId);
     };
-  }, [leftHand, rightHand, analyser, chordColor]);
+  }, [handsRef, analyser, chordColor]);
 
   return <canvas ref={canvasRef} className="visualizer-canvas" />;
 };
