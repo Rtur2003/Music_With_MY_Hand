@@ -1,13 +1,19 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - MASTER DYNAMICS COMPRESSOR & MICROTONAL PITCH
+ * AURASYNTH PRO VST3 ENGINE - AUDIO-REACTIVE ENVIRONMENT ENGINE (CYCLE 4)
+ * ============================================================================
+ * Visual Spectacle Architecture:
+ *  - Fullscreen Audio-Reactive Particle Nebula Canvas (#reactive-bg-canvas)
+ *  - Real-Time Frequency Spectrum & Gesture Modulated Particle Dynamics
+ *  - 4 Dynamic Themes: Cyberpunk Stage, Symphony Hall, Cosmos Nebula, Plasma Matrix
+ *  - Burst Shockwave Pulses on Gesture Chord Transitions
  * ============================================================================
  */
 
 // Global Audio Architecture
 let audioCtx = null;
 let masterGain = null;
-let compressorNode = null; // DynamicsCompressor
+let compressorNode = null;
 let stereoPanner = null;
 let filterNode = null;
 
@@ -21,6 +27,12 @@ let delayFeedback = null;
 let delayGain = null;
 let subOscGain = null;
 let analyserNode = null;
+
+// Environment Visual Engine State
+let envTheme = "cyberpunk"; // "cyberpunk", "symphony", "cosmos", "plasma"
+let bgParticles = [];
+let bgShockwaves = [];
+const NUM_BG_PARTICLES = 120;
 
 // Metronome Engine State
 let isMetronomeActive = false;
@@ -219,7 +231,6 @@ function initAudioEngine() {
     masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
 
-    // Dynamics Compressor Node
     compressorNode = audioCtx.createDynamicsCompressor();
     compressorNode.threshold.setValueAtTime(-18, audioCtx.currentTime);
     compressorNode.knee.setValueAtTime(12, audioCtx.currentTime);
@@ -235,7 +246,6 @@ function initAudioEngine() {
         stereoPanner.pan.setValueAtTime(0, audioCtx.currentTime);
     }
 
-    // 3-Band EQ Nodes
     eqBassNode = audioCtx.createBiquadFilter();
     eqBassNode.type = "lowshelf";
     eqBassNode.frequency.setValueAtTime(100, audioCtx.currentTime);
@@ -272,7 +282,6 @@ function initAudioEngine() {
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
 
-    // Routing Chain: Filter -> EQ Bass -> EQ Mid -> EQ Treble -> Stereo Panner -> Compressor -> Master Gain -> Analyser -> Destination
     filterNode.connect(eqBassNode);
     eqBassNode.connect(eqMidNode);
     eqMidNode.connect(eqTrebleNode);
@@ -300,7 +309,8 @@ function initAudioEngine() {
 
     startArpeggiatorScheduler();
     startVisualizer();
-    console.log("[AuraSynth PRO] Engine with Dynamics Compressor Initialized.");
+    initBackgroundEnvironmentEngine();
+    console.log("[AuraSynth PRO] Audio Engine & Reactive World Engine Initialized.");
 }
 
 function midiToFreq(midi) {
@@ -341,50 +351,6 @@ function getTransposedChord(fingerCount) {
     return { name: fullName, notes: notes, freqs: freqs, midiNotes: midiNotes };
 }
 
-// METRONOME CLICK TRACK
-function toggleMetronome() {
-    if (!audioCtx || !isAudioRunning) return;
-    const metroBtn = document.getElementById("btn-metro-toggle");
-
-    isMetronomeActive = !isMetronomeActive;
-
-    if (isMetronomeActive) {
-        metroBtn.classList.add("active");
-        metroBtn.textContent = "🔔 METRONOM (ON)";
-        startMetronomeLoop();
-    } else {
-        metroBtn.classList.remove("active");
-        metroBtn.textContent = "🔔 METRONOM (OFF)";
-        if (metronomeTimerId) clearInterval(metronomeTimerId);
-    }
-}
-
-function startMetronomeLoop() {
-    if (metronomeTimerId) clearInterval(metronomeTimerId);
-
-    const intervalMs = (60.0 / arpBpm) * 1000;
-    metronomeTimerId = setInterval(() => {
-        if (isMetronomeActive && audioCtx) {
-            playClick(audioCtx.currentTime);
-        }
-    }, intervalMs);
-}
-
-function playClick(time) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.frequency.setValueAtTime(1000, time);
-    gain.gain.setValueAtTime(0.15, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-
-    osc.connect(gain);
-    gain.connect(masterGain);
-
-    osc.start(time);
-    osc.stop(time + 0.05);
-}
-
 // ============================================================================
 // 3. SYNTHESIS & GESTURE LOOPER ENGINE
 // ============================================================================
@@ -404,6 +370,17 @@ function triggerChordTransition(fingerCount) {
 
     updateChordUI(fingerCount, chordData);
     sendMidiChordNotes(chordData.midiNotes);
+
+    // Trigger Shockwave in Background Environment
+    if (fingerCount > 0) {
+        bgShockwaves.push({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            radius: 10,
+            maxRadius: Math.max(window.innerWidth, window.innerHeight) * 0.7,
+            alpha: 1.0
+        });
+    }
 
     if (chordData.freqs.length === 0) {
         activeVoices.forEach(voice => {
@@ -475,6 +452,49 @@ function updateChordUI(fingerCount, chordData) {
             box.classList.remove("active");
         }
     });
+}
+
+// METRONOME
+function toggleMetronome() {
+    if (!audioCtx || !isAudioRunning) return;
+    const metroBtn = document.getElementById("btn-metro-toggle");
+
+    isMetronomeActive = !isMetronomeActive;
+
+    if (isMetronomeActive) {
+        metroBtn.classList.add("active");
+        metroBtn.textContent = "🔔 METRONOM (ON)";
+        startMetronomeLoop();
+    } else {
+        metroBtn.classList.remove("active");
+        metroBtn.textContent = "🔔 METRONOM (OFF)";
+        if (metronomeTimerId) clearInterval(metronomeTimerId);
+    }
+}
+
+function startMetronomeLoop() {
+    if (metronomeTimerId) clearInterval(metronomeTimerId);
+    const intervalMs = (60.0 / arpBpm) * 1000;
+    metronomeTimerId = setInterval(() => {
+        if (isMetronomeActive && audioCtx) {
+            playClick(audioCtx.currentTime);
+        }
+    }, intervalMs);
+}
+
+function playClick(time) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.frequency.setValueAtTime(1000, time);
+    gain.gain.setValueAtTime(0.15, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(time);
+    osc.stop(time + 0.05);
 }
 
 // GESTURE LOOPER ENGINE
@@ -715,7 +735,107 @@ function processRightHandExpression(landmarks) {
 }
 
 // ============================================================================
-// 5. MEDIAPIPE TRACKING & VISUALIZER
+// 5. AUDIO-REACTIVE BACKGROUND ENVIRONMENT ENGINE
+// ============================================================================
+function initBackgroundEnvironmentEngine() {
+    const bgCanvas = document.getElementById("reactive-bg-canvas");
+    const ctx = bgCanvas.getContext("2d");
+
+    function resizeBg() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+    }
+    resizeBg();
+    window.addEventListener("resize", resizeBg);
+
+    // Initialize Particles
+    bgParticles = [];
+    for (let i = 0; i < NUM_BG_PARTICLES; i++) {
+        bgParticles.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            radius: Math.random() * 3 + 1,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: (Math.random() - 0.5) * 0.8,
+            baseHue: Math.random() * 60 + 180
+        });
+    }
+
+    const freqArray = new Uint8Array(256);
+
+    function renderBg() {
+        requestAnimationFrame(renderBg);
+
+        const w = bgCanvas.width;
+        const h = bgCanvas.height;
+
+        let avgEnergy = 0;
+        if (analyserNode && isAudioRunning) {
+            analyserNode.getByteFrequencyData(freqArray);
+            let sum = 0;
+            for (let i = 0; i < 64; i++) sum += freqArray[i];
+            avgEnergy = sum / 64.0 / 255.0;
+        }
+
+        ctx.fillStyle = "rgba(11, 13, 19, 0.25)";
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw Shockwaves
+        for (let s = bgShockwaves.length - 1; s >= 0; s--) {
+            const shock = bgShockwaves[s];
+            ctx.beginPath();
+            ctx.arc(shock.x, shock.y, shock.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = envTheme === "cyberpunk" ? `rgba(0, 195, 255, ${shock.alpha})` :
+                              envTheme === "symphony" ? `rgba(255, 204, 0, ${shock.alpha})` :
+                              envTheme === "plasma" ? `rgba(255, 59, 48, ${shock.alpha})` : `rgba(175, 82, 222, ${shock.alpha})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            shock.radius += 12 + avgEnergy * 15;
+            shock.alpha -= 0.02;
+
+            if (shock.alpha <= 0 || shock.radius >= shock.maxRadius) {
+                bgShockwaves.splice(s, 1);
+            }
+        }
+
+        // Draw Audio-Reactive Particles
+        bgParticles.forEach(p => {
+            p.x += p.vx * (1.0 + avgEnergy * 3.0);
+            p.y += p.vy * (1.0 + avgEnergy * 3.0);
+
+            if (p.x < 0) p.x = w;
+            if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h;
+            if (p.y > h) p.y = 0;
+
+            const scale = p.radius * (1.0 + avgEnergy * 2.5);
+            let colorStr = "";
+
+            if (envTheme === "cyberpunk") {
+                colorStr = `hsla(${190 + avgEnergy * 80}, 100%, 60%, ${0.3 + avgEnergy * 0.5})`;
+            } else if (envTheme === "symphony") {
+                colorStr = `hsla(${40 + avgEnergy * 30}, 100%, 55%, ${0.3 + avgEnergy * 0.5})`;
+            } else if (envTheme === "cosmos") {
+                colorStr = `hsla(${270 + avgEnergy * 60}, 100%, 65%, ${0.3 + avgEnergy * 0.5})`;
+            } else if (envTheme === "plasma") {
+                colorStr = `hsla(${10 + avgEnergy * 50}, 100%, 60%, ${0.3 + avgEnergy * 0.5})`;
+            }
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, scale, 0, Math.PI * 2);
+            ctx.fillStyle = colorStr;
+            ctx.shadowBlur = scale * 2;
+            ctx.shadowColor = colorStr;
+            ctx.fill();
+        });
+    }
+
+    renderBg();
+}
+
+// ============================================================================
+// 6. MEDIAPIPE TRACKING & VISUALIZER
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -899,7 +1019,7 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 6. EVENT LISTENERS
+// 7. EVENT LISTENERS
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
@@ -948,6 +1068,13 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btn-start-audio").addEventListener("click", (e) => {
         e.stopPropagation();
         initAudioEngine();
+    });
+
+    // Theme Selector Listener
+    document.getElementById("env-theme-select").addEventListener("change", (e) => {
+        envTheme = e.target.value;
+        const bar = document.getElementById("midi-status-bar");
+        if (bar) bar.textContent = `Audio-Reactive World Active (${e.target.options[e.target.selectedIndex].text})`;
     });
 
     document.getElementById("slider-eq-bass").addEventListener("input", (e) => {
