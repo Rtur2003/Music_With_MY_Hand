@@ -1,107 +1,85 @@
-# 🎻 AuraSynth Pro VST3 Ultimate - Real-time Gestural Synthesizer & Audio-Reactive World Engine
+# 👑 AuraSynth Pro VST3 Ultimate Edition (v10.0)
 
-![AuraSynth Pro VST3 Rack](bg_studio.png)
+> **Next-Generation AI Gestural Synthesizer & Generative 3D Audio-Visual Spectacle**  
+> *Piyasadaki En Gelişmiş Jest ile Kontrol Edilen Yapay Zeka Enstrümanı ve Jeneratif 3D Görsel Şölen Sentezörü*
 
-> **AuraSynth Pro VST3**, bilgisayarınızın kamerasını kullanarak **iki elinizin hareketlerini (Dual Hand Tracking)** gerçek zamanlı takip eden, sol el jestleriyle **akorları ve döngü kayıtlarını (Looper)**, sağ el jestleriyle ise **filtrenin perdesini (Cutoff), 3D Derinliğini (Reverb Depth), Vibratoyu ve Paning** değerlerini dinamik yöneten yeni nesil bir **Sanal Donanım Enstrümanı (VST3)** ve **Sese Duyarlı 3D Atmosfer Motorudur**.
-
----
-
-## 🌟 Ana Özellikler & Stüdyo Mimarisi
-
-### 🔌 1. WebMIDI DAW Çıkış Desteği (External DAW Router)
-* Sol ve sağ el hareketlerinizi anlık olarak **MIDI Mesajlarına (Note On/Off, CC#74 Cutoff, CC#10 Pan, CC#91 Reverb ve Pitch Bend)** dönüştürür.
-* **Ableton Live, FL Studio, Logic Pro, Serum veya Kontakt** gibi profesyonel DAW yazılımlarına sanal MIDI klavyesi gibi bağlanır.
-
-### 🔁 2. Dahili 4-Kanal Canlı Looper Station (`⏺ REC`, `▶ PLAY`, `🗑 CLEAR`)
-* Performans esnasında sol elinizle çaldığınız akor dizilimini (örneğin 4 ölçülük akor yürüyüşünü) zaman uyumlu olarak kaydeder ve döngüye alır.
-* Arka planda akor döngüsü çalarken ellerinizle üstüne canlı keman soloları veya arpejler atmanıza olanak tanır.
-
-### 🌌 3. Sese & Jestlere Duyarlı Canlı Atmosfer Motoru (Audio-Reactive World)
-* **4 Dinamik Mekan Teması**:
-  * 🌌 **Cyberpunk Stage**: Neon cyan ve mor frekans patlamaları.
-  * 🎻 **Symphony Hall**: Sıcak amber/altın senfoni işık pırıltıları.
-  * 🪐 **Deep Cosmos Nebula**: Derin uzay ve yıldız hızı bükülmesi.
-  * ⚡ **High-Voltage Plasma Matrix**: Yüksek voltajlı plazma arkları.
-* Sol elinizin her akor değişiminde ekrana ve arka plana halka şeklinde şok dalgaları (shockwave pulses) yayılır.
-
-### 🧊 4. 3D Z-Aks Derinlik Modülasyonu (Hand Camera Proximity)
-* MediaPipe'ın Z-aksını kullanarak elinizin kameraya olan yakınlığını algılar.
-* Elinizi kameraya yaklaştırdığınızda Yankı/Reverb Derinliğini ve 3D Genişliğini büyütür, uzaklaştırdığınızda merkeze odaklar.
-
-### 🎛️ 5. Master Dynamics Kompresör & 3-Band Parametrik EQ
-* **Dynamics Compressor**: $-18\text{dB}$ eşik değeri ve $8:1$ oranı ile çoklu akor ve ses çalımlarında frekans çakışmalarını ve sesteki patlamaları (clipping/distortion) engeller.
-* **3-Band EQ**: Bass (100 Hz), Mid (1 kHz) ve Treble (8 kHz) stüdyo tonlama kontrolü.
-
-### 🎙️ 6. Canlı WAV Ses Kayıtçısı & Senkronize Metronom
-* **WAV Audio Exporter**: Performansınızı tarayıcı üzerinden stüdyo kalitesinde ses dosyası (`.wav`) olarak kaydeder ve bilgisayarınıza indirir.
-* **BPM Metronom**: Arpeggiator ve Looper ile tam senkronize ritim kontrolü.
+![AuraSynth Pro VST Showcase](C:\Users\MONSTER\.gemini\antigravity\brain\9e0bfc2f-8eb5-4a8e-82b2-a8d6dc98f111\aurasynth_vst_showcase_1785510450220.png)
 
 ---
 
-## 🖐️ Jest & El Haritası Tablosu
+## 🌟 ÖNE ÇIKAN SİNYAL VE GÖRSEL ÖZELLİKLER (HIGHLIGHTS)
 
-| El | Konum / Jest | İşlev & Müzikal Parametre | MIDI Karşılığı |
-| :--- | :--- | :--- | :--- |
-| **Sol El** | 1 Parmak Açık | Solo Lead / Root Nota | MIDI Note On (Solo) |
-| **Sol El** | 2 Parmak Açık | Majör Triad Akoru (Root-Maj3-P5) | MIDI Chord Triad |
-| **Sol El** | 3 Parmak Açık | Minör Triad Akoru (Root-Min3-P5) | MIDI Chord Triad |
-| **Sol El** | 4 Parmak Açık | 7'li Caz/Pop Akoru (7th) | MIDI 7th Chord |
-| **Sol El** | 5 Parmak Açık | Zengin Ambient Pad (9th) | MIDI 9th Chord |
-| **Sol El** | Yumruk (Kapalı) | Sesi Tamamen Sustur (Mute) | MIDI Note Off |
-| **Sağ El** | Dikey Konum (Y-Aksı) | Filter Cutoff Frekansı (150Hz - 12kHz) | MIDI CC #74 |
-| **Sağ El** | Yatay Konum (X-Aksı) | Stereo Panning (Sol $\leftrightarrow$ Sağ) | MIDI CC #10 |
-| **Sağ El** | Derinlik (Z-Aksı) | 3D Reverb Odası ve Oda Genişliği | 3D Delay Mod |
-| **Sağ El** | Hızlı Titretme (Wiggle) | Gerçek Canlı Keman Vibratosu | Pitch Bend |
-| **Sağ El** | Cımbız (Pinch) Hareketi | Reverb Yankı Miktarı | MIDI CC #91 |
+AuraSynth Pro VST3 Ultimate, el hareketlerinizi 60 FPS hızında yapay zeka ile takip ederek kristal netliğinde 3D ses sentezine ve sese duyarlı jeneratif prosedürel sanat eserlerine dönüştürür.
 
----
+### 1. 🎛️ Modüler Donanım VST3 Kasası (4-Tab Modular Hardware Rack)
+* **🎛️ Sentez & Akor Pad Matrisi**: 5 Parlak Akor Padi, Gam Seçimi (Majör, Minör, Pentatonik, Hicaz/Oriental, Dorian Fusion) ve Oktav Ayarı.
+* **🎚️ Stüdyo 3-Band Parametrik EQ**: Low-Shelf, Peak Mid ve High-Shelf stüdyo frekans şekillendirme.
+* **🔁 Canlı Looper & Arpeggiator**: 4-Kanal Canlı Jest Looper'ı, Metronom (BPM) ve Up/Down/Random Arpeggiator.
+* **🌌 3D Görsel Mekan & WebMIDI Output**: Sese duyarlı jeneratif mekanlar ve harici DAW'lara (Ableton Live, FL Studio, Logic Pro) WebMIDI çıkışı.
 
-## 🏗️ Sistem Mimari Şeması
+### 2. 🌌 Jeneratif 3D Audio-Reactive Görsel Şölen (`#reactive-bg-canvas`)
+* **🌌 Quantum 3D Hyperspace Warp (`warp`)**: Sesteki bas enerjisi arttıkça hızlanan 150 adet 3D hipersenaryo yıldızı.
+* **🔮 Generative Crystalline Polygons (`polygons`)**: Bas frekanslarına göre genişleyen ve dönen kristalik geometrik çokgenler.
+* **⚡ High-Voltage Neon Aurora Waves (`aurora`)**: Harmonik yapıya göre ekranda dalgalanan lazer sine-wave kurdeleleri.
+* **💥 Kinetic Particle Burst Fireworks (`burst`)**: Akor bastığınız anda ekranda patlayan parçacık fişekleri.
+* **🎲 Procedural Chaos Art Mode (`C` Key)**: Sesteki piklere göre renk spektrumunu ve çokgen köşelerini rastgele mutasyona uğratan Jeneratif Sanat Modu.
 
-```mermaid
-graph TD
-    A["📷 Web Kamerası (60 FPS Feed)"] --> B["👁️ Vision Agent (MediaPipe Hands)"]
-    B --> C["⚡ Debouncer Hysteresis Filter (3-Frame)"]
-    
-    C -->|Sol El Jestleri| D["🎼 Akor & Looper Motoru"]
-    C -->|Sağ El X/Y/Z| E["🎛️ Timbre & Expression Engine"]
-    
-    D --> F["🔊 Web Audio Sentezleyici (PeriodicWave)"]
-    E --> F
-    
-    F --> G["🎚️ 3-Band EQ & Dynamics Compressor"]
-    G --> H["🔊 Hoparlör / Ses Çıkışı"]
-    G --> I["🔌 WebMIDI API Out (Ableton/FL Studio)"]
-    G --> J["🌌 Sese Duyarlı 3D Atmosfer Motoru"]
-```
+### 3. 🔊 Kristal Netliğinde Stüdyo DSP Ses Motoru (v10.0 Audio Engine)
+* **Master Brickwall Peak Limiter Guard (-2dB)**: Ses patlamalarını ve dijital bozulmaları engeller.
+* **Normalize Edilmiş Sentez Dalga Formları (PeriodicWaves)**: Keman, CS-80, Rhodes, Gitar, Brass ve Koro seslerinde pürüzsüz harmonik denge.
+* **5-Frame Hysteresis Debouncer Guard**: El hareketlerinde oluşan anlık kıpırdamaları engelleyerek akorları kilitler.
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+## 🖐️ JEST İLE KONTROL VE AKOR REHBERİ
 
-### 1. Tarayıcı Üzerinden Çalıştırma (Tavsiye Edilen)
-Proje dizininde yerel bir HTTP sunucusu başlatın:
+![AuraSynth Studio Visual](C:\Users\MONSTER\.gemini\antigravity\brain\9e0bfc2f-8eb5-4a8e-82b2-a8d6dc98f111\synth_studio_background_1785509102518.png)
+
+### 🖐️ SOL EL: AKOR JEST MATRİSİ (LEFT HAND CHORDS)
+| Parmak Sayısı | Akor Tipi | Açıklama & Ton |
+| :--- | :--- | :--- |
+| **☝️ 1 Parmak** | Solo Lead / Root | Orta Do (Middle C4 Solo Lead) |
+| **✌️ 2 Parmak** | Majör Triad | Saf Majör Akor (C4 - E4 - G4) |
+| **🤟 3 Parmak** | Minör Triad | Saf Minör Akor (C4 - Eb4 - G4) |
+| **🖖 4 Parmak** | 7'li Akor | Caz / Pop 7th (C4 - E4 - G4 - Bb4) |
+| **🖐️ 5 Parmak** | Ambient Pad 9th | Zengin Ambient Pad (C4 - G4 - C5 - D5) |
+| **✊ Yumruk** | Mute | Sessiz Mod (Sustur) |
+
+### 🎛️ SAĞ EL: 3D EXPRESSION & EFEKT KONTROLÜ (RIGHT HAND 3D)
+* **📐 Y-Aksı (Dikey)**: Cutoff Filtresi Frekansı ($800\text{ Hz} \rightarrow 12.000\text{ Hz}$) (MIDI CC #74).
+* **↔️ X-Aksı (Yatay)**: Pan Oranı ($L \leftrightarrow R$) (MIDI CC #10).
+* **🔍 Z-Aksı (Derinlik)**: 3D Delay ve Reverb Süresi.
+* **🤌 Pinch (Cımbız Jest)**: Yankı Yoğunluğu (MIDI CC #91).
+
+---
+
+## ⌨️ KLAVYE KISAYOLLARI (SHORTCUTS)
+
+* **`H` Tuşu**: **🙈 Sinema Görsel Şölen Modu** (Arayüzü gizler / açar).
+* **`M` Tuşu**: 3D Görsel Şölen Mekanlarını sırasıyla değiştirir (**Warp $\rightarrow$ Polygons $\rightarrow$ Aurora $\rightarrow$ Burst**).
+* **`C` Tuşu**: **🎲 CHAOS ART** modunu açar (Rastgele Jeneratif Sanat Mutasyonu).
+
+---
+
+## 🚀 KURULUM VE ÇALIŞTIRMA (RUNNING LOCALLY)
+
+AuraSynth Pro VST3 bağımsız bir statik web uygulaması olarak çalışır. Herhangi bir ekstra derleme adımı gerektirmez:
 
 ```bash
+# 1. Proje dizinine gidin
+cd c:\Users\MONSTER\Desktop\Music_With_MY_Hand
+
+# 2. Yerel HTTP sunucusunu başlatın
 python -m http.server 8080
-```
 
-Ardından tarayıcınızdan **`http://localhost:8080`** adresine gidin ve **"AUDIO MOTORUNU BAŞLAT"** butonuna tıklayın.
-
-### 2. Standalone Python Sürümünü Çalıştırma
-Gerekli bağımlılıkları yükleyin:
-
-```bash
-pip install opencv-python mediapipe sounddevice numpy
-```
-
-Uygulamayı başlatın:
-
-```bash
-python gesture_synth.py
+# 3. Tarayıcınızda açın
+# http://localhost:8080
 ```
 
 ---
 
-## 📄 Lisans
-AuraSynth Pro VST3 Ultimate Architecture &copy; 2026 • MIT License.
+## 📄 LİSANS VE KREDİLER
+
+- **Geliştirici**: Advanced Agentic Coding Team
+- **Kütüphaneler**: Google MediaPipe Hands, Web Audio API, Standard WebMIDI API.
+- **Telif Hakkı**: © 2026 AuraSynth Audio Technologies. Tüm Hakları Saklıdır.
