@@ -1,12 +1,13 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - ALL AUDIT CRITIQUE FIXES INTEGRATED (v11.0)
+ * AURASYNTH PRO VST3 ULTIMATE - DISTINCT 12 PRESET SOUND ENGINES (v12.0)
  * ============================================================================
- * Solved Issues:
- *  1. Dynamic ADSR Envelope Generator (Attack 10ms-2s, Decay 50ms-2s, Sustain 10%-100%, Release 50ms-3s)
- *  2. Rich Dual-Oscillator Chorus Detune (+4 Cents) for Fat Analog Warmth
- *  3. Camera Frame-Out Sustain Pedal Mode (S key or Pedal Button)
- *  4. Sleek Preset Browser Dropdown with Instant Preset Switcher
+ * Features:
+ *  1. 12 Unmistakable Preset Timbre Profiles (Unique Harmonics + ADSR + Filter Cutoffs)
+ *  2. Instant Audio Engine Re-trigger on Preset Change
+ *  3. Dynamic ADSR Envelope Generator (Attack, Decay, Sustain, Release)
+ *  4. Dual-Oscillator Stereo Chorus Detune Layer
+ *  5. Camera Out-Of-Frame Sustain Pedal Hold Mode
  * ============================================================================
  */
 
@@ -172,19 +173,68 @@ const CHORD_STRUCTURES_SCALES = {
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-const WAVETABLE_HARMONICS = {
-    violin:    [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
-    cs80:      [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
-    rhodes:    [0, 1.0, 0.15, 0.4, 0.05, 0.1],
-    guitar:    [0, 1.0, 0.6, 0.4, 0.2, 0.1],
-    brass:     [0, 1.0, 0.8, 0.6, 0.4, 0.2],
-    choir:     [0, 1.0, 0.2, 0.7, 0.1, 0.4],
-    organ:     [0, 1.0, 1.0, 0.8, 0.8, 0.6, 0.4, 0.2],
-    marimba:   [0, 1.0, 0.1, 0.8, 0.02, 0.3, 0.01],
-    flute:     [0, 1.0, 0.2, 0.05, 0.02],
-    synthwave: [0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3],
-    harp:      [0, 1.0, 0.7, 0.3, 0.1, 0.05],
-    subbass:   [0, 1.0, 0.4, 0.1]
+// 12 DISTINCT INSTRUMENT PROFILES (Harmonics + ADSR + Filter Cutoff Preset Default)
+const PRESET_PROFILES = {
+    violin: {
+        harmonics: [0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+        adsr: { attack: 0.12, decay: 0.25, sustain: 0.85, release: 0.25 },
+        cutoffHz: 8000
+    },
+    cs80: {
+        harmonics: [0, 1.0, 0.2, 0.8, 0.1, 0.6, 0.05, 0.4],
+        adsr: { attack: 0.08, decay: 0.30, sustain: 0.75, release: 0.35 },
+        cutoffHz: 5500
+    },
+    rhodes: {
+        harmonics: [0, 1.0, 0.0, 0.4, 0.0, 0.1],
+        adsr: { attack: 0.01, decay: 0.40, sustain: 0.40, release: 0.20 },
+        cutoffHz: 3800
+    },
+    guitar: {
+        harmonics: [0, 1.0, 0.8, 0.1, 0.4, 0.05, 0.2],
+        adsr: { attack: 0.01, decay: 0.28, sustain: 0.30, release: 0.15 },
+        cutoffHz: 6500
+    },
+    brass: {
+        harmonics: [0, 1.0, 0.0, 0.9, 0.0, 0.7, 0.0, 0.5, 0.0, 0.3],
+        adsr: { attack: 0.04, decay: 0.20, sustain: 0.80, release: 0.18 },
+        cutoffHz: 4500
+    },
+    choir: {
+        harmonics: [0, 0.2, 1.0, 0.1, 0.8, 0.05, 0.6],
+        adsr: { attack: 0.25, decay: 0.40, sustain: 0.90, release: 0.45 },
+        cutoffHz: 4800
+    },
+    organ: {
+        harmonics: [0, 1.0, 1.0, 1.0, 1.0, 0.8, 0.8, 0.6, 0.6],
+        adsr: { attack: 0.005, decay: 0.05, sustain: 1.0, release: 0.08 },
+        cutoffHz: 11000
+    },
+    marimba: {
+        harmonics: [0, 1.0, 0.05, 0.0, 0.3, 0.0, 0.0],
+        adsr: { attack: 0.005, decay: 0.18, sustain: 0.10, release: 0.10 },
+        cutoffHz: 3200
+    },
+    flute: {
+        harmonics: [0, 1.0, 0.1, 0.02, 0.01],
+        adsr: { attack: 0.14, decay: 0.20, sustain: 0.80, release: 0.20 },
+        cutoffHz: 2800
+    },
+    synthwave: {
+        harmonics: [0, 1.0, 1.0, 0.9, 0.9, 0.8, 0.8, 0.7, 0.7],
+        adsr: { attack: 0.02, decay: 0.20, sustain: 0.75, release: 0.22 },
+        cutoffHz: 12000
+    },
+    harp: {
+        harmonics: [0, 1.0, 0.7, 0.0, 0.3, 0.0, 0.1],
+        adsr: { attack: 0.008, decay: 0.35, sustain: 0.25, release: 0.25 },
+        cutoffHz: 7500
+    },
+    subbass: {
+        harmonics: [0, 1.0, 0.3],
+        adsr: { attack: 0.02, decay: 0.30, sustain: 0.85, release: 0.20 },
+        cutoffHz: 500
+    }
 };
 
 // ============================================================================
@@ -307,7 +357,8 @@ function toggleChaosArtMode() {
 function getOrCreateWavetable(presetKey) {
     if (periodicWavesCache[presetKey]) return periodicWavesCache[presetKey];
 
-    const harmonics = WAVETABLE_HARMONICS[presetKey] || WAVETABLE_HARMONICS.violin;
+    const profile = PRESET_PROFILES[presetKey] || PRESET_PROFILES.violin;
+    const harmonics = profile.harmonics;
     const real = new Float32Array(harmonics.length);
     const imag = new Float32Array(harmonics.length);
 
@@ -323,7 +374,34 @@ function getOrCreateWavetable(presetKey) {
 
 function switchInstrumentPreset(newPresetKey) {
     currentPreset = newPresetKey;
-    console.log(`[PRESET SWITCH] Switched to: ${currentPreset}`);
+    const profile = PRESET_PROFILES[currentPreset] || PRESET_PROFILES.violin;
+
+    // Apply preset ADSR & Filter Defaults
+    adsrParams = { ...profile.adsr };
+    if (filterNode && audioCtx) {
+        filterNode.frequency.setTargetAtTime(profile.cutoffHz, audioCtx.currentTime, 0.05);
+        rightMetrics.cutoffHz = profile.cutoffHz;
+    }
+
+    // Update UI Sliders
+    if (document.getElementById("slider-adsr-attack")) {
+        document.getElementById("slider-adsr-attack").value = adsrParams.attack;
+        document.getElementById("val-adsr-attack").textContent = `${Math.round(adsrParams.attack * 1000)} ms`;
+    }
+    if (document.getElementById("slider-adsr-decay")) {
+        document.getElementById("slider-adsr-decay").value = adsrParams.decay;
+        document.getElementById("val-adsr-decay").textContent = `${Math.round(adsrParams.decay * 1000)} ms`;
+    }
+    if (document.getElementById("slider-adsr-sustain")) {
+        document.getElementById("slider-adsr-sustain").value = adsrParams.sustain;
+        document.getElementById("val-adsr-sustain").textContent = `${Math.round(adsrParams.sustain * 100)} %`;
+    }
+    if (document.getElementById("slider-adsr-release")) {
+        document.getElementById("slider-adsr-release").value = adsrParams.release;
+        document.getElementById("val-adsr-release").textContent = `${Math.round(adsrParams.release * 1000)} ms`;
+    }
+
+    console.log(`[PRESET SWITCH] Switched to ${currentPreset}: Cutoff=${profile.cutoffHz}Hz, ADSR=`, adsrParams);
 
     if (audioCtx && isAudioRunning) {
         const newWave = getOrCreateWavetable(currentPreset);
@@ -335,6 +413,7 @@ function switchInstrumentPreset(newPresetKey) {
             }
         });
 
+        // Instant Re-trigger of active chord with new preset sound
         if (currentChordIndex >= 0) {
             const idx = currentChordIndex;
             currentChordIndex = -1;
@@ -630,18 +709,16 @@ function triggerChordTransition(fingerCount) {
             const sustainGainVal = (0.25 * adsrParams.sustain) / numVoicesNeeded;
 
             voiceGain.gain.setValueAtTime(0.0001, now);
-            // ADSR Ramping
             voiceGain.gain.linearRampToValueAtTime(peakGainVal, now + adsrParams.attack);
             voiceGain.gain.linearRampToValueAtTime(sustainGainVal, now + adsrParams.attack + adsrParams.decay);
 
-            // Rich Dual-Oscillator Chorus Detune Layer (+4 Cents)
             const osc1 = audioCtx.createOscillator();
             osc1.setPeriodicWave(customWave);
             osc1.frequency.setValueAtTime(freq, now);
 
             const osc2 = audioCtx.createOscillator();
             osc2.setPeriodicWave(customWave);
-            osc2.frequency.setValueAtTime(freq * 1.0023, now); // Warm Stereo Detune
+            osc2.frequency.setValueAtTime(freq * 1.0023, now);
 
             osc1.connect(voiceGain);
             osc2.connect(voiceGain);
