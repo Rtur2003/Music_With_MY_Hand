@@ -1,12 +1,12 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - PRISTINE PURE SOUND & DEFAULT FIXES (v9.5)
+ * AURASYNTH PRO VST3 ULTIMATE - STABLE MAIN CHORDS & 5-FRAME DEBOUNCER (v10.0)
  * ============================================================================
  * Fixes:
- *  1. Open Filter Cutoff Default (8000 Hz) for Bright, Crisp, Clear Sound
- *  2. Rock-Solid Stable Pitch (Removed Random Wiggle Vibrato & Heavy Phase Detune)
- *  3. Balanced Sub-Bass & Reverb Default Levels (No Muffled Mud)
- *  4. Instant Responsive Glide (50 ms)
+ *  1. 5-Frame Strict Hysteresis Debouncer (Zero Finger Flickering / Instant Stability)
+ *  2. Middle-C (MIDI 60) Musical Register (Pure Sweet Main Chords, Zero Low Mud)
+ *  3. Sweet Open-Voiced Triads, 7ths, and Ambient 9th Pads
+ *  4. Smooth Legato Transitions (80 ms Portamento)
  * ============================================================================
  */
 
@@ -84,7 +84,7 @@ let currentPreset = "violin";
 let currentKey = "C";
 let currentScaleMode = "major";
 let currentOctaveShift = 0;
-let portamentoTime = 0.05; // Fast 50ms glide
+let portamentoTime = 0.08; // Smooth 80ms legato glide
 let filterResonance = 1.0;
 
 // Arpeggiator State
@@ -94,9 +94,9 @@ let arpStepIndex = 0;
 let nextArpNoteTime = 0;
 let arpTimerId = null;
 
-// Debouncing State
+// Debouncing State (Strict 5-Frame Stability Guard)
 let rawFingerHistory = [];
-const DEBOUNCE_FRAMES = 3;
+const DEBOUNCE_FRAMES = 5;
 let stableFingerCount = 0;
 
 // PeriodicWave Cache
@@ -123,10 +123,11 @@ let fpsCount = 0;
 // Transposition Mapping Tables
 const KEY_OFFSETS = { "C": 0, "G": 7, "D": 2, "F": 5, "A": 9, "Bb": 10 };
 
+// PURE MAIN CHORDS (Middle C4 Basis - Sweet Open Harmonics)
 const CHORD_STRUCTURES_SCALES = {
     major: {
         0: { name: "Mute", notesLabel: "Sessiz", intervals: [] },
-        1: { name: "Solo Lead / Root", notesLabel: "Kök (Solo)", intervals: [0, 12] },
+        1: { name: "Solo Lead / Root", notesLabel: "Middle C (Solo)", intervals: [0, 12] },
         2: { name: "Majör Akor", notesLabel: "Root - Maj3 - P5", intervals: [0, 4, 7, 12] },
         3: { name: "Minör Akor", notesLabel: "Root - Min3 - P5", intervals: [0, 3, 7, 12] },
         4: { name: "7'li Akor (7th)", notesLabel: "Root - Maj3 - P5 - Min7", intervals: [0, 4, 7, 10] },
@@ -160,7 +161,6 @@ const CHORD_STRUCTURES_SCALES = {
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-// Pure Bright Normalized Harmonic Profiles
 const WAVETABLE_HARMONICS = {
     violin: [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
     cs80:   [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
@@ -322,7 +322,6 @@ function initAudioEngine() {
     masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
 
-    // Peak Limiter Node
     peakLimiterNode = audioCtx.createDynamicsCompressor();
     peakLimiterNode.threshold.setValueAtTime(-2.0, audioCtx.currentTime);
     peakLimiterNode.knee.setValueAtTime(0.0, audioCtx.currentTime);
@@ -354,14 +353,14 @@ function initAudioEngine() {
     eqTrebleNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
     eqTrebleNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
-    // Default Filter Cutoff set to 8000 Hz (Bright, Crisp & Open Sound)
+    // Open Cutoff Filter (8000 Hz)
     filterNode = audioCtx.createBiquadFilter();
     filterNode.type = "lowpass";
     filterNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
     filterNode.Q.setValueAtTime(1.0, audioCtx.currentTime);
 
     subOscGain = audioCtx.createGain();
-    subOscGain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Tight subtle sub-bass
+    subOscGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
 
     delayNode = audioCtx.createDelay();
     delayNode.delayTime.setValueAtTime(0.20, audioCtx.currentTime);
@@ -370,7 +369,7 @@ function initAudioEngine() {
     delayFeedback.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
     delayGain = audioCtx.createGain();
-    delayGain.gain.setValueAtTime(0.08, audioCtx.currentTime); // Tight clean delay
+    delayGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
 
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
@@ -404,7 +403,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Pure Pristine Audio Engine Active.");
+    console.log("[AuraSynth PRO] Stable Main Chords Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -417,6 +416,7 @@ function midiToNoteName(midi) {
     return `${name}${oct}`;
 }
 
+// MAIN CHORD CALCULATOR (Middle C4 Basis = MIDI 60)
 function getTransposedChord(fingerCount) {
     const scaleDict = CHORD_STRUCTURES_SCALES[currentScaleMode] || CHORD_STRUCTURES_SCALES.major;
     const chordInfo = scaleDict[fingerCount] || scaleDict[0];
@@ -426,7 +426,8 @@ function getTransposedChord(fingerCount) {
     }
 
     const keyOffset = KEY_OFFSETS[currentKey] || 0;
-    const baseMidi = 48 + keyOffset + (currentOctaveShift * 12);
+    // MIDI 60 is Middle C4 (Pure, sweet main register)
+    const baseMidi = 60 + keyOffset + (currentOctaveShift * 12);
 
     const freqs = [];
     const notes = [];
@@ -495,7 +496,7 @@ function loadPresetFromStorage() {
         currentKey = data.key || "C";
         currentScaleMode = data.scale || "major";
         currentOctaveShift = data.octave || 0;
-        portamentoTime = data.glide || 0.05;
+        portamentoTime = data.glide || 0.08;
         arpBpm = data.bpm || 120;
         arpMode = data.arpMode || "off";
         envTheme = data.envTheme || "warp";
@@ -533,7 +534,7 @@ function loadPresetFromStorage() {
 }
 
 // ============================================================================
-// 4. ROCK-SOLID PURE POLYPHONIC SYNTHESIS
+// 4. MAIN CHORD TRANSITION ENGINE
 // ============================================================================
 function triggerChordTransition(fingerCount) {
     if (!audioCtx) return;
@@ -614,7 +615,6 @@ function triggerChordTransition(fingerCount) {
             voiceGain.gain.setValueAtTime(0.0001, now);
             voiceGain.gain.linearRampToValueAtTime(0.25 / numVoicesNeeded, now + 0.03);
 
-            // Rock-solid single oscillator for pure, crystal-clear pitch stability
             const osc1 = audioCtx.createOscillator();
             osc1.setPeriodicWave(customWave);
             osc1.frequency.setValueAtTime(freq, now);
@@ -878,7 +878,7 @@ function playArpPluck(freq, time, duration) {
 }
 
 // ============================================================================
-// 5. RIGHT HAND EXPRESSION (CLEAN & PURE - NO SHAKY DETUNE)
+// 5. RIGHT HAND EXPRESSION (CLEAN & PURE)
 // ============================================================================
 function processRightHandExpression(landmarks) {
     if (!audioCtx || !isAudioRunning) return;
@@ -895,7 +895,6 @@ function processRightHandExpression(landmarks) {
         cycleNextEnvironment();
     }
 
-    // Cutoff Filter: Opens up smoothly from 800 Hz to 12,000 Hz based on Y position
     const normY = Math.max(0, Math.min(1, 1.0 - indexTip.y));
     const targetCutoff = 800 + Math.pow(normY, 2.0) * 11200;
     filterNode.frequency.setTargetAtTime(targetCutoff, audioCtx.currentTime, 0.06);
@@ -1112,7 +1111,7 @@ function initBackgroundEnvironmentEngine() {
 }
 
 // ============================================================================
-// 7. MEDIAPIPE TRACKING & VISUALIZER
+// 7. MEDIAPIPE TRACKING (STRICT 5-FRAME HYSTERESIS DEBOUNCER)
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -1129,12 +1128,13 @@ function countExtendedFingersRaw(landmarks) {
     return Math.max(0, Math.min(5, count));
 }
 
+// Strict 5-Frame Hysteresis Debouncer Guard
 function getDebouncedFingerCount(rawCount) {
     rawFingerHistory.push(rawCount);
     if (rawFingerHistory.length > DEBOUNCE_FRAMES) {
         rawFingerHistory.shift();
     }
-    if (rawFingerHistory.every(val => val === rawCount)) {
+    if (rawFingerHistory.length === DEBOUNCE_FRAMES && rawFingerHistory.every(val => val === rawCount)) {
         stableFingerCount = rawCount;
     }
     return stableFingerCount;
