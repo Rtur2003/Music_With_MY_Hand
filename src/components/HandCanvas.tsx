@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Hand Canvas Component
-   Draws glowing hand skeleton landmarks & audio waveform overlay
+   Draws glowing hand skeleton landmarks, audio waveform,
+   and Conductor Baton Ribbon Trail (inspired by Google Semi-Conductor)
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef } from 'react';
@@ -10,10 +11,10 @@ interface HandCanvasProps {
   leftHand: Landmark[] | null;
   rightHand: Landmark[] | null;
   analyser?: any; // Tone.Analyser waveform
-  chordColor?: string; // e.g. "#00ffcc"
+  chordColor?: string; // e.g. "#00ffcc" or "#ffaa00"
 }
 
-// MediaPipe hand connection pairs for skeleton rendering
+// MediaPipe hand connection pairs
 const CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],        // Thumb
   [0, 5], [5, 6], [6, 7], [7, 8],        // Index
@@ -30,6 +31,7 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
   chordColor = '#00ffcc',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const batonTrailRef = useRef<{ x: number; y: number; alpha: number }[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,7 +42,6 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
     let animId = 0;
 
     const render = () => {
-      // Resize to match container
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       if (canvas.width !== w || canvas.height !== h) {
@@ -50,7 +51,7 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
 
       ctx.clearRect(0, 0, w, h);
 
-      // ── 1. Draw Audio Waveform (Bottom) ──────────────────
+      // ── 1. Audio Waveform (Bottom) ──────────────────
       if (analyser) {
         try {
           const values = analyser.getValue() as Float32Array;
@@ -82,11 +83,43 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
         }
       }
 
-      // ── 2. Draw Hand Skeleton Landmarks ───────────────────
+      // ── 2. Conductor Baton Ribbon Trail (Right Hand Index Tip) ──
+      if (rightHand && rightHand[8]) {
+        const tipX = (1 - rightHand[8].x) * w;
+        const tipY = rightHand[8].y * h;
+
+        batonTrailRef.current.push({ x: tipX, y: tipY, alpha: 1.0 });
+        if (batonTrailRef.current.length > 25) {
+          batonTrailRef.current.shift();
+        }
+      }
+
+      if (batonTrailRef.current.length > 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#ffaa00';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#ffaa00';
+
+        for (let i = 0; i < batonTrailRef.current.length - 1; i++) {
+          const p1 = batonTrailRef.current[i];
+          const p2 = batonTrailRef.current[i + 1];
+          p1.alpha *= 0.92;
+
+          ctx.strokeStyle = `rgba(255, 170, 0, ${p1.alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // ── 3. Hand Skeleton Landmarks ───────────────────
       const drawSkeleton = (hand: Landmark[], color: string, glowColor: string) => {
         ctx.save();
 
-        // Draw bone connections
         ctx.lineWidth = 3;
         ctx.strokeStyle = color;
         ctx.shadowBlur = 12;
@@ -97,7 +130,6 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
           const pt2 = hand[p2];
           if (!pt1 || !pt2) continue;
 
-          // Note: hand coordinates are normalized 0-1 (X is mirrored for selfie view)
           const x1 = (1 - pt1.x) * w;
           const y1 = pt1.y * h;
           const x2 = (1 - pt2.x) * w;
@@ -109,7 +141,6 @@ export const HandCanvas: React.FC<HandCanvasProps> = ({
           ctx.stroke();
         }
 
-        // Draw joint nodes
         for (let i = 0; i < hand.length; i++) {
           const pt = hand[i];
           if (!pt) continue;
