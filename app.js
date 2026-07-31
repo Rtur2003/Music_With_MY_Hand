@@ -89,6 +89,21 @@ let midiAccess = null;
 let selectedMidiOutput = null;
 let lastActiveMidiNotes = [];
 
+// Visual Piano Keyboard & Chorus Detune State
+let chorusDetuneMultiplier = 1.0023;
+let activePianoMidiNotes = new Set();
+const PIANO_START_MIDI = 48; // C3
+const PIANO_END_MIDI = 72;   // C5
+
+const QWERTY_NOTE_MAP = {
+    'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 'f': 65,
+    't': 66, 'g': 67, 'y': 68, 'h': 69, 'u': 70, 'j': 71, 'k': 72
+};
+
+const QWERTY_CHORD_MAP = {
+    '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '0': 0
+};
+
 // Audio & Scale State
 let isAudioRunning = false;
 let currentChordIndex = -1;

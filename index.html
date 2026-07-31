@@ -321,7 +321,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: STÜDYO EQ & MASTER DYNAMICS -->
+            <!-- TAB 3: STÜDYO EQ & SPATIAL FX -->
             <div id="tab-eq" class="tab-panel">
                 <div class="panel-row">
                     <div class="panel-card">
@@ -365,6 +365,44 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="panel-row" style="margin-top: 12px;">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span class="card-title">🌌 3D DELAY & REVERB FX</span>
+                        </div>
+                        <div class="sliders-row-2">
+                            <div class="slider-box">
+                                <span class="knob-tag">DELAY TIME</span>
+                                <input type="range" id="slider-delay-time" min="0.05" max="0.8" step="0.05" value="0.20" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-delay-time">200 ms</span>
+                            </div>
+                            <div class="slider-box">
+                                <span class="knob-tag">DELAY FEEDBACK</span>
+                                <input type="range" id="slider-delay-feedback" min="0.0" max="0.85" step="0.05" value="0.25" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-delay-feedback">25 %</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span class="card-title">✨ DETUNE CHORUS & REVERB WET</span>
+                        </div>
+                        <div class="sliders-row-2">
+                            <div class="slider-box">
+                                <span class="knob-tag">CHORUS DETUNE</span>
+                                <input type="range" id="slider-chorus-detune" min="1.000" max="1.010" step="0.001" value="1.002" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-chorus-detune">2.3 Cents</span>
+                            </div>
+                            <div class="slider-box">
+                                <span class="knob-tag">REVERB WET MIX</span>
+                                <input type="range" id="slider-reverb-wet" min="0.0" max="0.6" step="0.02" value="0.10" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-reverb-wet">10 %</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- TAB 4: LOOPER & ARPEGGIATOR -->
@@ -381,6 +419,7 @@
                             <button id="btn-loop-clear" class="looper-btn-lg btn-clear">🗑 TEMİZLE</button>
                             <button id="btn-freeze-toggle" class="looper-btn-lg btn-freeze">❄️ FREEZE</button>
                             <button id="btn-rec-wav" class="looper-btn-lg btn-wav">🎙️ WAV KAYDET</button>
+                            <button id="btn-export-midi" class="looper-btn-lg btn-midi">🎼 MIDI İNDİR</button>
                         </div>
                     </div>
 
@@ -478,6 +517,17 @@
                         <span class="gauge-label">STEREO PAN (X)</span>
                         <span class="gauge-val" id="gauge-pan">CENTER</span>
                         <div class="meter-fill meter-cyan" id="bar-pan" style="width: 50%;"></div>
+                    </div>
+                </div>
+
+                <!-- REALTIME 25-KEY VISUAL PIANO KEYBOARD RACK -->
+                <div class="virtual-piano-rack">
+                    <div class="piano-rack-bar">
+                        <span class="panel-tag">🎹 STÜDYO PİYANO KLAVYESİ (CANLI GÖRSEL NOTA DİZİLİMİ)</span>
+                        <span class="piano-mode-tag">KLAVYE: C3 - C5 | QWERTY: A-K & 1-5 AKTİF</span>
+                    </div>
+                    <div class="piano-keyboard-container" id="piano-keyboard-container">
+                        <!-- Rendered by JS app.js -->
                     </div>
                 </div>
 
