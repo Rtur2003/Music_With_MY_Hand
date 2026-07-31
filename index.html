@@ -34,7 +34,7 @@
                     <div class="vst-power-led" id="vst-power-led"></div>
                     <div class="brand-text">
                         <span class="vst-brand">AURASYNTH PRO</span>
-                        <span class="vst-version">VST3 ULTIMATE • AUDIO-REACTIVE ENVIRONMENT ENGINE v5.0</span>
+                        <span class="vst-version">VST3 ULTIMATE • LISSAJOUS PHASE SCOPE & REVERB PRESETS v5.5</span>
                     </div>
                 </div>
 
@@ -305,9 +305,12 @@
                         </div>
 
                         <div class="sub-knob-unit">
-                            <label>ARP TEMPO (BPM)</label>
-                            <input type="range" id="slider-bpm" min="80" max="160" step="2" value="120" class="vst-range">
-                            <span class="val-readout" id="val-bpm">120 BPM</span>
+                            <label>MONİTÖR MODU</label>
+                            <select id="scope-mode-select" class="vst-select-sm">
+                                <option value="wave" selected>🌊 Dalga Formu (Time-Domain)</option>
+                                <option value="spectrum">📊 FFT Spektrum Analizörü</option>
+                                <option value="lissajous">🌀 Lissajous Faz Skobu</option>
+                            </select>
                         </div>
 
                         <div class="sub-knob-unit">
@@ -347,7 +350,7 @@
                                 <span class="ro-val" id="ro-chord-name">Mute / Beklemede</span>
                             </div>
                             <div class="readout-group">
-                                <span class="ro-label">FREKANS DİZİLİMİ & ENVIRONMENT</span>
+                                <span class="ro-label">FREKANS DİZİLİMİ & SCOPE MODE</span>
                                 <span class="ro-val ro-gold" id="ro-notes-list">---</span>
                             </div>
                         </div>
@@ -358,7 +361,7 @@
             <!-- VST RACK FOOTER -->
             <footer class="vst-footer">
                 <span>AuraSynth Pro VST3 Ultimate &copy; 2026 • Dual Hand Gestural Instrument</span>
-                <span id="midi-status-bar">Audio-Reactive World Active (Cyberpunk Stage)</span>
+                <span id="midi-status-bar">Audio-Reactive World Active (Lissajous Scope Ready)</span>
             </footer>
         </div>
 
