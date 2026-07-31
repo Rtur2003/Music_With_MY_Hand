@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraSynth Pro VST3 Ultimate - Market-Leading Gestural Synthesizer</title>
+    <title>AuraSynth Pro VST3 Ultimate - Flagship Gestural Synthesizer</title>
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,60 +34,27 @@
                     <div class="vst-power-led" id="vst-power-led"></div>
                     <div class="brand-text">
                         <span class="vst-brand">AURASYNTH PRO</span>
-                        <span class="vst-version">VST3 FLAGSHIP • SPECTRAL FREEZE & PRESET STORAGE v6.0</span>
+                        <span class="vst-version">VST3 FLAGSHIP • MODULAR RACK ARCHITECTURE v7.0</span>
                     </div>
                 </div>
 
-                <!-- Global Engine Controls -->
-                <div class="header-controls">
-                    <div class="control-unit">
-                        <label>SESE DUYARLI MEKAN / TEMA</label>
-                        <select id="env-theme-select" class="vst-select">
-                            <option value="cyberpunk" selected>🌌 Cyberpunk Stage (Neon Pulse)</option>
-                            <option value="symphony">🎻 Symphony Hall (Warm Amber Shimmer)</option>
-                            <option value="cosmos">🪐 Deep Cosmos Nebula (Starfield Warp)</option>
-                            <option value="plasma">⚡ High-Voltage Plasma Arc</option>
-                        </select>
-                    </div>
-
-                    <div class="control-unit">
-                        <label>ENSTRÜMAN WAVETABLE</label>
-                        <select id="preset-select" class="vst-select">
-                            <option value="violin" selected>🎻 Stradivarius Solo Violin (Custom Harmonic)</option>
-                            <option value="cs80">🌌 Blade Runner CS-80 Dystopian Pad</option>
-                            <option value="rhodes">🎹 Rhodes Bell Tines & Warm Pad</option>
-                            <option value="guitar">🎸 Overdriven Lead Synth Guitar</option>
-                            <option value="brass">🎺 Epic Orchestral Brass Section</option>
-                            <option value="choir">🔮 Sacred Celestial Formant Choir</option>
-                        </select>
-                    </div>
-
-                    <div class="control-unit">
-                        <label>MÜZİKAL MOD / GAM</label>
-                        <select id="scale-mode-select" class="vst-select">
-                            <option value="major" selected>Majör / Minör (Diyatonik)</option>
-                            <option value="pentatonic">Pentatonik Gam (Melodik)</option>
-                            <option value="oriental">Hicaz / Oriental Gam (Doğu)</option>
-                            <option value="dorian">Dorian Modu (Caz/Fusion)</option>
-                        </select>
-                    </div>
-
-                    <div class="control-unit">
-                        <label>WEBMIDI DAĞITICI</label>
-                        <select id="midi-select" class="vst-select">
-                            <option value="none" selected>Sanal Dahili Synthesizer</option>
-                        </select>
-                    </div>
-
+                <div class="header-actions">
                     <button id="btn-start-audio" class="vst-power-btn">
                         <span class="power-icon">⏻</span> AUDIO MOTORUNU BAŞLAT
                     </button>
-
-                    <button id="btn-toggle-guide" class="vst-help-btn" title="Kullanım Kılavuzunu Göster/Gizle">
-                        ❓ KILAVUZ
+                    <button id="btn-toggle-guide" class="vst-help-btn">
+                        ❓ KULLANIM KILAVUZU
                     </button>
                 </div>
             </header>
+
+            <!-- MODULAR RACK TAB SELECTOR BAR -->
+            <nav class="rack-tab-bar">
+                <button class="rack-tab-btn active" data-tab="tab-synth">🎛️ MODULE 01: AKOR & SENTEZ</button>
+                <button class="rack-tab-btn" data-tab="tab-eq">🎚️ MODULE 02: STÜDYO EQ & MASTER</button>
+                <button class="rack-tab-btn" data-tab="tab-looper">🔁 MODULE 03: LOOPER & ARPEGGIATOR</button>
+                <button class="rack-tab-btn" data-tab="tab-env">🌌 MODULE 04: 3D MEKAN & WEBMIDI</button>
+            </nav>
 
             <!-- QUICK HELP GUIDE MODAL (COLLAPSIBLE) -->
             <div id="help-drawer" class="vst-help-drawer hidden">
@@ -120,241 +87,294 @@
                 </div>
             </div>
 
-            <!-- MAIN RACK GRID (HARDWARE MODULES) -->
-            <main class="vst-grid">
-                <!-- MODULE 1: CHORD ENGINE & 3-BAND EQ -->
-                <section class="vst-module">
-                    <div class="module-header">
-                        <span class="module-title">MODULE 01 // SOL EL: AKOR & 3-BAND STÜDYO EQ</span>
-                        <span class="module-tag" id="left-hand-status">BEKLENİYOR</span>
-                    </div>
-                    
-                    <div class="chord-matrix-grid">
-                        <div class="chord-box" data-fingers="1">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c1"></span>
-                                <span class="finger-label">1 PARMAK</span>
+            <!-- TAB 1: SYNTH & CHORD MATRIX -->
+            <div id="tab-synth" class="tab-panel active">
+                <div class="panel-row">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🎼 SOL EL: AKOR & OKTAV MATRİSİ</span>
+                            <span class="module-tag" id="left-hand-status">BEKLENİYOR</span>
+                        </div>
+                        <div class="chord-matrix-grid">
+                            <div class="chord-box" data-fingers="1">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">1 PARMAK</span></div>
+                                <div class="chord-main-name">Solo Lead</div>
+                                <div class="chord-freqs">Kök Nota</div>
                             </div>
-                            <div class="chord-main-name" id="chord-name-1">Solo Lead</div>
-                            <div class="chord-freqs" id="chord-freq-1">Kök Nota</div>
-                        </div>
-
-                        <div class="chord-box" data-fingers="2">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c2"></span>
-                                <span class="finger-label">2 PARMAK</span>
+                            <div class="chord-box" data-fingers="2">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">2 PARMAK</span></div>
+                                <div class="chord-main-name">Majör Akor</div>
+                                <div class="chord-freqs">Root-Maj3-P5</div>
                             </div>
-                            <div class="chord-main-name" id="chord-name-2">Majör Akor</div>
-                            <div class="chord-freqs" id="chord-freq-2">Root - Maj3 - P5</div>
-                        </div>
-
-                        <div class="chord-box" data-fingers="3">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c3"></span>
-                                <span class="finger-label">3 PARMAK</span>
+                            <div class="chord-box" data-fingers="3">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">3 PARMAK</span></div>
+                                <div class="chord-main-name">Minör Akor</div>
+                                <div class="chord-freqs">Root-Min3-P5</div>
                             </div>
-                            <div class="chord-main-name" id="chord-name-3">Minör Akor</div>
-                            <div class="chord-freqs" id="chord-freq-3">Root - Min3 - P5</div>
-                        </div>
-
-                        <div class="chord-box" data-fingers="4">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c4"></span>
-                                <span class="finger-label">4 PARMAK</span>
+                            <div class="chord-box" data-fingers="4">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">4 PARMAK</span></div>
+                                <div class="chord-main-name">7'li Akor</div>
+                                <div class="chord-freqs">Root-Maj3-P5-7th</div>
                             </div>
-                            <div class="chord-main-name" id="chord-name-4">7'li Akor (7th)</div>
-                            <div class="chord-freqs" id="chord-freq-4">Root - Maj3 - P5 - 7th</div>
-                        </div>
-
-                        <div class="chord-box" data-fingers="5">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c5"></span>
-                                <span class="finger-label">5 PARMAK</span>
+                            <div class="chord-box" data-fingers="5">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">5 PARMAK</span></div>
+                                <div class="chord-main-name">Ambient Pad</div>
+                                <div class="chord-freqs">Root-P5-Oct-9th</div>
                             </div>
-                            <div class="chord-main-name" id="chord-name-5">Ambient Pad</div>
-                            <div class="chord-freqs" id="chord-freq-5">Root - P5 - Oct - 9th</div>
-                        </div>
-
-                        <div class="chord-box" data-fingers="0">
-                            <div class="box-top">
-                                <span class="led-indicator" id="led-c0"></span>
-                                <span class="finger-label">YUMRUK</span>
-                            </div>
-                            <div class="chord-main-name">Sustur (Mute)</div>
-                            <div class="chord-freqs">Sessiz Zemin</div>
-                        </div>
-                    </div>
-
-                    <!-- 3-BAND PARAMETRIC EQ ROW -->
-                    <div class="sub-controls-row">
-                        <div class="sub-knob-unit">
-                            <label>EQ BASS (100Hz)</label>
-                            <input type="range" id="slider-eq-bass" min="-12" max="12" step="1" value="0" class="vst-range">
-                            <span class="val-readout" id="val-eq-bass">0 dB</span>
-                        </div>
-
-                        <div class="sub-knob-unit">
-                            <label>EQ MID (1kHz)</label>
-                            <input type="range" id="slider-eq-mid" min="-12" max="12" step="1" value="0" class="vst-range">
-                            <span class="val-readout" id="val-eq-mid">0 dB</span>
-                        </div>
-
-                        <div class="sub-knob-unit">
-                            <label>EQ TREBLE (8kHz)</label>
-                            <input type="range" id="slider-eq-treble" min="-12" max="12" step="1" value="0" class="vst-range">
-                            <span class="val-readout" id="val-eq-treble">0 dB</span>
-                        </div>
-                    </div>
-
-                    <div class="sub-controls-row">
-                        <div class="sub-knob-unit">
-                            <label>ANA GAM (KEY)</label>
-                            <select id="key-select" class="vst-select-sm">
-                                <option value="C" selected>C (Do)</option>
-                                <option value="G">G (Sol)</option>
-                                <option value="D">D (Re)</option>
-                                <option value="F">F (Fa)</option>
-                                <option value="A">A (La)</option>
-                                <option value="Bb">Bb (Si b)</option>
-                            </select>
-                        </div>
-
-                        <div class="sub-knob-unit">
-                            <label>OKTAV SHIFT</label>
-                            <select id="octave-select" class="vst-select-sm">
-                                <option value="-1">Octave -1 (Derin)</option>
-                                <option value="0" selected>Octave 0 (Normal)</option>
-                                <option value="1">Octave +1 (Tiz)</option>
-                            </select>
-                        </div>
-
-                        <div class="sub-knob-unit">
-                            <label>PORTAMENTO (GLIDE)</label>
-                            <input type="range" id="slider-glide" min="0.05" max="0.8" step="0.05" value="0.25" class="vst-range">
-                            <span class="val-readout" id="val-glide">250 ms</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- MODULE 2: TIMBRE, ARPEGGIATOR & LIVE LOOPER RACK -->
-                <section class="vst-module">
-                    <div class="module-header">
-                        <span class="module-title">MODULE 02 // SAĞ EL, ARPEGGIATOR & LOOPER</span>
-                        <span class="module-tag" id="right-hand-status">BEKLENİYOR</span>
-                    </div>
-
-                    <div class="telemetry-rack">
-                        <!-- Cutoff Gauge -->
-                        <div class="gauge-card">
-                            <span class="gauge-label">FILTER CUTOFF (Y-AKS)</span>
-                            <div class="gauge-display" id="gauge-cutoff">1200 Hz</div>
-                            <div class="meter-bar-container">
-                                <div class="meter-bar-fill" id="bar-cutoff" style="width: 35%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- 3D Depth Gauge -->
-                        <div class="gauge-card">
-                            <span class="gauge-label">3D DEPTH (Z-AKS)</span>
-                            <div class="gauge-display" id="gauge-depth">NEAR (1.0)</div>
-                            <div class="meter-bar-container">
-                                <div class="meter-bar-fill meter-gold" id="bar-depth" style="width: 80%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Vibrato Gauge -->
-                        <div class="gauge-card">
-                            <span class="gauge-label">VIOLIN VIBRATO (WIGGLE)</span>
-                            <div class="gauge-display" id="gauge-vibrato">0 %</div>
-                            <div class="meter-bar-container">
-                                <div class="meter-bar-fill meter-purple" id="bar-vibrato" style="width: 0%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Stereo Pan Gauge -->
-                        <div class="gauge-card">
-                            <span class="gauge-label">STEREO PAN (X-AKS)</span>
-                            <div class="gauge-display" id="gauge-pan">CENTER (0)</div>
-                            <div class="meter-bar-container">
-                                <div class="meter-bar-fill meter-cyan" id="bar-pan" style="width: 50%;"></div>
+                            <div class="chord-box" data-fingers="0">
+                                <div class="box-top"><span class="led-indicator"></span><span class="finger-label">YUMRUK</span></div>
+                                <div class="chord-main-name">Sustur (Mute)</div>
+                                <div class="chord-freqs">Sessiz Zemin</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- LIVE LOOP STATION & RECORDER ROW -->
-                    <div class="looper-bar">
-                        <button id="btn-loop-rec" class="looper-btn btn-rec">⏺ REC LOOP</button>
-                        <button id="btn-loop-play" class="looper-btn btn-play">▶ PLAY</button>
-                        <button id="btn-loop-clear" class="looper-btn btn-clear">🗑 CLEAR</button>
-                        <button id="btn-freeze-toggle" class="looper-btn btn-freeze">❄️ FREEZE DRONE</button>
-                        <button id="btn-metro-toggle" class="looper-btn btn-metro">🔔 METRONOM</button>
-                        <button id="btn-rec-wav" class="looper-btn btn-wav">🎙️ WAV KAYDET</button>
-                        <span class="looper-status" id="looper-status-text">LOOP: IDLE</span>
-                    </div>
-
-                    <!-- ARPEGGIATOR CONTROLS ROW -->
-                    <div class="sub-controls-row">
-                        <div class="sub-knob-unit">
-                            <label>ARPEGGIATOR MODE</label>
-                            <select id="arp-mode-select" class="vst-select-sm">
-                                <option value="off" selected>OFF (Sürekli Pad)</option>
-                                <option value="up">UP (Yukarı Tırmanan)</option>
-                                <option value="down">DOWN (Aşağı İnen)</option>
-                                <option value="updown">UP-DOWN (Çift Yönlü)</option>
-                                <option value="random">RANDOM (Rastgele Melodi)</option>
-                            </select>
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🎹 SENTEZLEYİCİ & GAM AYARLARI</span>
                         </div>
-
-                        <div class="sub-knob-unit">
-                            <label>MONİTÖR MODU</label>
-                            <select id="scope-mode-select" class="vst-select-sm">
-                                <option value="wave" selected>🌊 Dalga Formu (Time-Domain)</option>
-                                <option value="spectrum">📊 FFT Spektrum Analizörü</option>
-                                <option value="lissajous">🌀 Lissajous Faz Skobu</option>
-                            </select>
-                        </div>
-
-                        <div class="sub-knob-unit">
-                            <label>PRESET DEPOLAMA</label>
-                            <div class="preset-btn-group">
-                                <button id="btn-save-preset" class="vst-btn-nano">💾 KAYDET</button>
-                                <button id="btn-load-preset" class="vst-btn-nano">📂 YÜKLE</button>
+                        <div class="knob-grid-2x2">
+                            <div class="knob-unit">
+                                <label>ENSTRÜMAN WAVETABLE</label>
+                                <select id="preset-select" class="vst-select-lg">
+                                    <option value="violin" selected>🎻 Stradivarius Solo Violin</option>
+                                    <option value="cs80">🌌 Blade Runner CS-80 Pad</option>
+                                    <option value="rhodes">🎹 Rhodes Bell Tines</option>
+                                    <option value="guitar">🎸 Overdriven Synth Guitar</option>
+                                    <option value="brass">🎺 Epic Orchestral Brass</option>
+                                    <option value="choir">🔮 Sacred Formant Choir</option>
+                                </select>
+                            </div>
+                            <div class="knob-unit">
+                                <label>MÜZİKAL GAM / MOD</label>
+                                <select id="scale-mode-select" class="vst-select-lg">
+                                    <option value="major" selected>Majör / Minör (Diyatonik)</option>
+                                    <option value="pentatonic">Pentatonik Gam (Melodik)</option>
+                                    <option value="oriental">Hicaz / Oriental Gam (Doğu)</option>
+                                    <option value="dorian">Dorian Modu (Caz/Fusion)</option>
+                                </select>
+                            </div>
+                            <div class="knob-unit">
+                                <label>ANA KEY (GAM)</label>
+                                <select id="key-select" class="vst-select-lg">
+                                    <option value="C" selected>C (Do)</option>
+                                    <option value="G">G (Sol)</option>
+                                    <option value="D">D (Re)</option>
+                                    <option value="F">F (Fa)</option>
+                                    <option value="A">A (La)</option>
+                                    <option value="Bb">Bb (Si b)</option>
+                                </select>
+                            </div>
+                            <div class="knob-unit">
+                                <label>OKTAV SHIFT</label>
+                                <select id="octave-select" class="vst-select-lg">
+                                    <option value="-1">Octave -1 (Derin)</option>
+                                    <option value="0" selected>Octave 0 (Normal)</option>
+                                    <option value="1">Octave +1 (Tiz)</option>
+                                </select>
                             </div>
                         </div>
                     </div>
-                </section>
-            </main>
+                </div>
+            </div>
 
-            <!-- LOWER SECTION: CAMERA HUD & STUDIO OSCILLOSCOPE MONITOR -->
+            <!-- TAB 2: STÜDYO EQ & MASTER DYNAMICS -->
+            <div id="tab-eq" class="tab-panel">
+                <div class="panel-row">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🎚️ 3-BAND PARAMETRİK STÜDYO EQ</span>
+                        </div>
+                        <div class="sliders-row-3">
+                            <div class="slider-box">
+                                <label>EQ BASS (100 Hz)</label>
+                                <input type="range" id="slider-eq-bass" min="-12" max="12" step="1" value="0" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-eq-bass">0 dB</span>
+                            </div>
+                            <div class="slider-box">
+                                <label>EQ MID (1 kHz)</label>
+                                <input type="range" id="slider-eq-mid" min="-12" max="12" step="1" value="0" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-eq-mid">0 dB</span>
+                            </div>
+                            <div class="slider-box">
+                                <label>EQ TREBLE (8 kHz)</label>
+                                <input type="range" id="slider-eq-treble" min="-12" max="12" step="1" value="0" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-eq-treble">0 dB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🎛️ MASTER VOLUME & PORTAMENTO</span>
+                        </div>
+                        <div class="sliders-row-2">
+                            <div class="slider-box">
+                                <label>PORTAMENTO (GLIDE)</label>
+                                <input type="range" id="slider-glide" min="0.05" max="0.8" step="0.05" value="0.25" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-glide">250 ms</span>
+                            </div>
+                            <div class="slider-box">
+                                <label>MASTER SES SEVİYESİ</label>
+                                <input type="range" id="slider-volume" min="0" max="1.0" step="0.01" value="0.75" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-volume">75 %</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: LOOPER & ARPEGGIATOR -->
+            <div id="tab-looper" class="tab-panel">
+                <div class="panel-row">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🔁 CANLI GESTURE LOOPER & RECORDER</span>
+                            <span class="looper-status" id="looper-status-text">LOOP: IDLE</span>
+                        </div>
+                        <div class="looper-button-grid">
+                            <button id="btn-loop-rec" class="looper-btn-lg btn-rec">⏺ REC LOOP</button>
+                            <button id="btn-loop-play" class="looper-btn-lg btn-play">▶ PLAY LOOP</button>
+                            <button id="btn-loop-clear" class="looper-btn-lg btn-clear">🗑 TEMİZLE</button>
+                            <button id="btn-freeze-toggle" class="looper-btn-lg btn-freeze">❄️ FREEZE DRONE</button>
+                            <button id="btn-rec-wav" class="looper-btn-lg btn-wav">🎙️ WAV KAYDET</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>⚡ ARPEGGIATOR & SENKRONİZE METRONOM</span>
+                        </div>
+                        <div class="knob-grid-2x2">
+                            <div class="knob-unit">
+                                <label>ARPEGGIATOR MODU</label>
+                                <select id="arp-mode-select" class="vst-select-lg">
+                                    <option value="off" selected>OFF (Sürekli Pad)</option>
+                                    <option value="up">UP (Yukarı Tırmanan)</option>
+                                    <option value="down">DOWN (Aşağı İnen)</option>
+                                    <option value="updown">UP-DOWN (Çift Yönlü)</option>
+                                    <option value="random">RANDOM (Rastgele Melodi)</option>
+                                </select>
+                            </div>
+                            <div class="knob-unit">
+                                <label>METRONOM</label>
+                                <button id="btn-metro-toggle" class="vst-select-lg btn-metro-lg">🔔 METRONOM (OFF)</button>
+                            </div>
+                            <div class="knob-unit full-width">
+                                <label>TEMPO (BPM)</label>
+                                <input type="range" id="slider-bpm" min="80" max="160" step="2" value="120" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-bpm">120 BPM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: 3D MEKAN & WEBMIDI -->
+            <div id="tab-env" class="tab-panel">
+                <div class="panel-row">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🌌 SESE DUYARLI 3D ATMOSFER TEMA SEÇİCİ</span>
+                        </div>
+                        <div class="knob-grid-2x2">
+                            <div class="knob-unit full-width">
+                                <label>ATMOSFER MEKANI VE PARÇACIK TEMASI</label>
+                                <select id="env-theme-select" class="vst-select-lg">
+                                    <option value="cyberpunk" selected>🌌 Cyberpunk Stage (Neon Pulse)</option>
+                                    <option value="symphony">🎻 Symphony Hall (Warm Amber Shimmer)</option>
+                                    <option value="cosmos">🪐 Deep Cosmos Nebula (Starfield Warp)</option>
+                                    <option value="plasma">⚡ High-Voltage Plasma Arc</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span>🔌 WEBMIDI DAW ÇIKIŞI & PRESET STORAGE</span>
+                        </div>
+                        <div class="knob-grid-2x2">
+                            <div class="knob-unit full-width">
+                                <label>WEBMIDI DAW ÇIKIŞ CİHAZI</label>
+                                <select id="midi-select" class="vst-select-lg">
+                                    <option value="none" selected>Sanal Dahili Synthesizer</option>
+                                </select>
+                            </div>
+                            <div class="knob-unit full-width">
+                                <label>PRESET KAYDET / YÜKLE</label>
+                                <div class="preset-btn-group-lg">
+                                    <button id="btn-save-preset" class="vst-btn-lg">💾 YAMANAYI KAYDET (.JSON)</button>
+                                    <button id="btn-load-preset" class="vst-btn-lg">📂 YAMANAYI YÜKLE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOWER DECK: TELEMETRY GAUGES & STUDIO MONITOR -->
             <section class="vst-lower-deck">
-                <!-- CAMERA FEED RACK -->
-                <div class="deck-panel camera-panel">
-                    <div class="panel-bar">
-                        <span>📷 CAMERA TRACKING FEED</span>
-                        <span class="camera-fps-badge" id="camera-fps">FPS: --</span>
+                <!-- TELEMETRY GAUGES -->
+                <div class="telemetry-bar">
+                    <div class="gauge-compact">
+                        <span class="gauge-label">FILTER CUTOFF (Y)</span>
+                        <span class="gauge-val" id="gauge-cutoff">1200 Hz</span>
+                        <div class="meter-fill" id="bar-cutoff" style="width: 35%;"></div>
                     </div>
-                    <div class="vst-video-box">
-                        <video id="input-video" playsinline></video>
-                        <canvas id="output-canvas"></canvas>
+                    <div class="gauge-compact">
+                        <span class="gauge-label">3D DEPTH (Z)</span>
+                        <span class="gauge-val" id="gauge-depth">MID (1.0)</span>
+                        <div class="meter-fill meter-gold" id="bar-depth" style="width: 80%;"></div>
+                    </div>
+                    <div class="gauge-compact">
+                        <span class="gauge-label">VIBRATO (WIGGLE)</span>
+                        <span class="gauge-val" id="gauge-vibrato">0 %</span>
+                        <div class="meter-fill meter-purple" id="bar-vibrato" style="width: 0%;"></div>
+                    </div>
+                    <div class="gauge-compact">
+                        <span class="gauge-label">STEREO PAN (X)</span>
+                        <span class="gauge-val" id="gauge-pan">CENTER</span>
+                        <div class="meter-fill meter-cyan" id="bar-pan" style="width: 50%;"></div>
                     </div>
                 </div>
 
-                <!-- CLOSED FIXED-HEIGHT STUDIO OSCILLOSCOPE MONITOR -->
-                <div class="deck-panel monitor-panel">
-                    <div class="panel-bar">
-                        <span>📊 STUDIO MONITOR // REAL-TIME SPECTRUM & OSCILLOSCOPE</span>
-                        <span class="active-chord-badge" id="hud-active-chord">IDLE</span>
+                <!-- CAMERA FEED RACK & STUDIO MONITOR GRID -->
+                <div class="monitor-deck-grid">
+                    <div class="deck-panel camera-panel">
+                        <div class="panel-bar">
+                            <span>📷 CAMERA TRACKING FEED</span>
+                            <span class="camera-fps-badge" id="camera-fps">FPS: --</span>
+                            <span class="right-hand-tag" id="right-hand-status">SAĞ EL: BEKLENİYOR</span>
+                        </div>
+                        <div class="vst-video-box">
+                            <video id="input-video" playsinline></video>
+                            <canvas id="output-canvas"></canvas>
+                        </div>
                     </div>
-                    <div class="monitor-display">
-                        <canvas id="audio-visualizer"></canvas>
-                        <div class="monitor-overlay">
-                            <div class="readout-group">
-                                <span class="ro-label">AKTİF AKOR / MELODİ</span>
-                                <span class="ro-val" id="ro-chord-name">Mute / Beklemede</span>
+
+                    <div class="deck-panel monitor-panel">
+                        <div class="panel-bar">
+                            <span>📊 STUDIO MONITOR // LISSAJOUS PHASE & WAVE SCOPE</span>
+                            <div class="scope-select-wrapper">
+                                <select id="scope-mode-select" class="vst-select-mini">
+                                    <option value="wave" selected>🌊 Wave</option>
+                                    <option value="spectrum">📊 FFT Spectrum</option>
+                                    <option value="lissajous">🌀 Lissajous Scope</option>
+                                </select>
                             </div>
-                            <div class="readout-group">
-                                <span class="ro-label">FREKANS DİZİLİMİ & SYSTEM STATE</span>
-                                <span class="ro-val ro-gold" id="ro-notes-list">---</span>
+                        </div>
+                        <div class="monitor-display">
+                            <canvas id="audio-visualizer"></canvas>
+                            <div class="monitor-overlay">
+                                <div class="readout-group">
+                                    <span class="ro-label">AKTİF AKOR</span>
+                                    <span class="ro-val" id="ro-chord-name">Mute / Beklemede</span>
+                                </div>
+                                <div class="readout-group">
+                                    <span class="ro-label">NOTALAR & SYSTEM STATUS</span>
+                                    <span class="ro-val ro-gold" id="ro-notes-list">---</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -363,8 +383,8 @@
 
             <!-- VST RACK FOOTER -->
             <footer class="vst-footer">
-                <span>AuraSynth Pro VST3 Flagship Edition &copy; 2026 • Dual Hand Gestural Instrument</span>
-                <span id="midi-status-bar">Spectral Freeze & LocalStorage Preset Engine Active</span>
+                <span>AuraSynth Pro VST3 Modular Architecture &copy; 2026 • Dual Hand Gestural Instrument</span>
+                <span id="midi-status-bar">System Status: Flawless Modular Architecture Ready</span>
             </footer>
         </div>
 

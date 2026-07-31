@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - FLAGSHIP EDITION (SPECTRAL FREEZE & STORAGE)
+ * AURASYNTH PRO VST3 ENGINE - MODULAR RACK TABBED ENGINE (v7.0)
  * ============================================================================
  */
 
@@ -165,6 +165,7 @@ function initWebMIDI() {
 
 function populateMidiOutputs() {
     const select = document.getElementById("midi-select");
+    if (!select) return;
     select.innerHTML = '<option value="none" selected>Sanal Dahili Synthesizer</option>';
     if (!midiAccess) return;
 
@@ -310,7 +311,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Flagship Engine Ready.");
+    console.log("[AuraSynth PRO] Modular Modular Engine Ready.");
 }
 
 function midiToFreq(midi) {
@@ -375,13 +376,12 @@ function savePresetToStorage() {
         bpm: arpBpm,
         arpMode: arpMode,
         envTheme: envTheme,
-        eqBass: document.getElementById("slider-eq-bass").value,
-        eqMid: document.getElementById("slider-eq-mid").value,
-        eqTreble: document.getElementById("slider-eq-treble").value
+        eqBass: document.getElementById("slider-eq-bass") ? document.getElementById("slider-eq-bass").value : 0,
+        eqMid: document.getElementById("slider-eq-mid") ? document.getElementById("slider-eq-mid").value : 0,
+        eqTreble: document.getElementById("slider-eq-treble") ? document.getElementById("slider-eq-treble").value : 0
     };
     localStorage.setItem("aurasynth_preset", JSON.stringify(presetData));
     
-    // Download as JSON file as well
     const blob = new Blob([JSON.stringify(presetData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -403,21 +403,25 @@ function loadPresetFromStorage() {
         arpMode = data.arpMode || "off";
         envTheme = data.envTheme || "cyberpunk";
 
-        document.getElementById("preset-select").value = currentPreset;
-        document.getElementById("key-select").value = currentKey;
-        document.getElementById("scale-mode-select").value = currentScaleMode;
-        document.getElementById("octave-select").value = currentOctaveShift;
-        document.getElementById("slider-glide").value = portamentoTime;
-        document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
-        document.getElementById("slider-bpm").value = arpBpm;
-        document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
-        document.getElementById("arp-mode-select").value = arpMode;
-        document.getElementById("env-theme-select").value = envTheme;
+        if (document.getElementById("preset-select")) document.getElementById("preset-select").value = currentPreset;
+        if (document.getElementById("key-select")) document.getElementById("key-select").value = currentKey;
+        if (document.getElementById("scale-mode-select")) document.getElementById("scale-mode-select").value = currentScaleMode;
+        if (document.getElementById("octave-select")) document.getElementById("octave-select").value = currentOctaveShift;
+        if (document.getElementById("slider-glide")) {
+            document.getElementById("slider-glide").value = portamentoTime;
+            document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
+        }
+        if (document.getElementById("slider-bpm")) {
+            document.getElementById("slider-bpm").value = arpBpm;
+            document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
+        }
+        if (document.getElementById("arp-mode-select")) document.getElementById("arp-mode-select").value = arpMode;
+        if (document.getElementById("env-theme-select")) document.getElementById("env-theme-select").value = envTheme;
 
-        if (data.eqBass) {
-            document.getElementById("slider-eq-bass").value = data.eqBass;
-            document.getElementById("val-eq-bass").textContent = `${data.eqBass > 0 ? '+' : ''}${data.eqBass} dB`;
-            if (eqBassNode && audioCtx) eqBassNode.gain.setValueAtTime(parseFloat(data.eqBass), audioCtx.currentTime);
+        if (document.getElementById("slider-eq-bass")) {
+            document.getElementById("slider-eq-bass").value = data.eqBass || 0;
+            document.getElementById("val-eq-bass").textContent = `${data.eqBass > 0 ? '+' : ''}${data.eqBass || 0} dB`;
+            if (eqBassNode && audioCtx) eqBassNode.gain.setValueAtTime(parseFloat(data.eqBass || 0), audioCtx.currentTime);
         }
 
         console.log("[PRESET STORAGE] Preset Loaded Successfully.");
@@ -435,7 +439,7 @@ function triggerChordTransition(fingerCount) {
         loopEvents.push({ timeOffset: timeOffset, fingerCount: fingerCount });
     }
 
-    if (isSpectralFrozen) return; // Prevent changing chord while frozen
+    if (isSpectralFrozen) return;
 
     if (currentChordIndex === fingerCount) return;
 
@@ -512,11 +516,12 @@ function triggerChordTransition(fingerCount) {
 }
 
 function updateChordUI(fingerCount, chordData) {
-    document.getElementById("ro-chord-name").textContent = chordData.name;
-    document.getElementById("ro-notes-list").textContent = chordData.notes.length > 0 
-        ? chordData.notes.join(" - ") 
-        : "---";
-    document.getElementById("hud-active-chord").textContent = chordData.name;
+    const nameEl = document.getElementById("ro-chord-name");
+    if (nameEl) nameEl.textContent = chordData.name;
+    const listEl = document.getElementById("ro-notes-list");
+    if (listEl) listEl.textContent = chordData.notes.length > 0 ? chordData.notes.join(" - ") : "---";
+    const badgeEl = document.getElementById("hud-active-chord");
+    if (badgeEl) badgeEl.textContent = chordData.name;
 
     document.querySelectorAll(".chord-box").forEach(box => {
         const fingers = parseInt(box.getAttribute("data-fingers"));
@@ -536,12 +541,16 @@ function toggleMetronome() {
     isMetronomeActive = !isMetronomeActive;
 
     if (isMetronomeActive) {
-        metroBtn.classList.add("active");
-        metroBtn.textContent = "🔔 METRONOM (ON)";
+        if (metroBtn) {
+            metroBtn.classList.add("active");
+            metroBtn.textContent = "🔔 METRONOM (ON)";
+        }
         startMetronomeLoop();
     } else {
-        metroBtn.classList.remove("active");
-        metroBtn.textContent = "🔔 METRONOM (OFF)";
+        if (metroBtn) {
+            metroBtn.classList.remove("active");
+            metroBtn.textContent = "🔔 METRONOM (OFF)";
+        }
         if (metronomeTimerId) clearInterval(metronomeTimerId);
     }
 }
@@ -583,15 +592,18 @@ function toggleLoopRecording() {
         isLoopPlaying = false;
         loopEvents = [];
         loopStartTime = audioCtx.currentTime;
-        recBtn.classList.add("recording");
-        recBtn.textContent = "⏺ REC (KAYDEDİLİYOR...)";
-        statusText.textContent = "LOOP: KAYIT YAPILIYOR";
+        if (recBtn) {
+            recBtn.classList.add("recording");
+            recBtn.textContent = "⏺ REC (KAYDEDİLİYOR...)";
+        }
+        if (statusText) statusText.textContent = "LOOP: KAYIT YAPILIYOR";
     } else {
         isLoopRecording = false;
         loopDuration = Math.max(0.5, audioCtx.currentTime - loopStartTime);
-        recBtn.classList.remove("recording");
-        recBtn.textContent = "⏺ REC LOOP";
-
+        if (recBtn) {
+            recBtn.classList.remove("recording");
+            recBtn.textContent = "⏺ REC LOOP";
+        }
         startLoopPlayback();
     }
 }
@@ -603,8 +615,8 @@ function startLoopPlayback() {
     const playBtn = document.getElementById("btn-loop-play");
     const statusText = document.getElementById("looper-status-text");
 
-    playBtn.classList.add("playing");
-    statusText.textContent = `LOOP: ÇALIYOR (${loopDuration.toFixed(1)}s)`;
+    if (playBtn) playBtn.classList.add("playing");
+    if (statusText) statusText.textContent = `LOOP: ÇALIYOR (${loopDuration.toFixed(1)}s)`;
 
     if (loopTimerId) clearInterval(loopTimerId);
 
@@ -631,10 +643,13 @@ function clearLoop() {
     loopEvents = [];
     if (loopTimerId) clearInterval(loopTimerId);
 
-    document.getElementById("btn-loop-rec").classList.remove("recording");
-    document.getElementById("btn-loop-rec").textContent = "⏺ REC LOOP";
-    document.getElementById("btn-loop-play").classList.remove("playing");
-    document.getElementById("looper-status-text").textContent = "LOOP: TEMİZLENDİ";
+    const recBtn = document.getElementById("btn-loop-rec");
+    const playBtn = document.getElementById("btn-loop-play");
+    const statusText = document.getElementById("looper-status-text");
+
+    if (recBtn) { recBtn.classList.remove("recording"); recBtn.textContent = "⏺ REC LOOP"; }
+    if (playBtn) playBtn.classList.remove("playing");
+    if (statusText) statusText.textContent = "LOOP: TEMİZLENDİ";
 }
 
 // LIVE WAV AUDIO RECORDING & EXPORT
@@ -665,13 +680,17 @@ function toggleWavRecording() {
 
         mediaRecorder.start();
         isWavRecording = true;
-        wavBtn.textContent = "⏹️ KAYDI BİTİR VE İNDİR";
-        wavBtn.style.background = "var(--led-red)";
+        if (wavBtn) {
+            wavBtn.textContent = "⏹️ KAYDI BİTİR VE İNDİR";
+            wavBtn.style.background = "var(--led-red)";
+        }
     } else {
         if (mediaRecorder) mediaRecorder.stop();
         isWavRecording = false;
-        wavBtn.textContent = "🎙️ WAV KAYDET";
-        wavBtn.style.background = "linear-gradient(180deg, #7928ca, #4a1380)";
+        if (wavBtn) {
+            wavBtn.textContent = "🎙️ WAV KAYDET";
+            wavBtn.style.background = "linear-gradient(180deg, #7928ca, #4a1380)";
+        }
     }
 }
 
@@ -790,22 +809,19 @@ function processRightHandExpression(landmarks) {
     rightMetrics.prevX = indexTip.x;
     rightMetrics.prevY = indexTip.y;
 
-    document.getElementById("gauge-cutoff").textContent = `${rightMetrics.cutoffHz} Hz`;
-    document.getElementById("bar-cutoff").style.width = `${Math.min(100, (rightMetrics.cutoffHz / 12000) * 100)}%`;
+    if (document.getElementById("gauge-cutoff")) document.getElementById("gauge-cutoff").textContent = `${rightMetrics.cutoffHz} Hz`;
+    if (document.getElementById("bar-cutoff")) document.getElementById("bar-cutoff").style.width = `${Math.min(100, (rightMetrics.cutoffHz / 12000) * 100)}%`;
 
-    document.getElementById("gauge-depth").textContent = zDepthNorm < 0.4 ? "NEAR (3D)" : zDepthNorm > 0.7 ? "FAR (3D)" : "MID (3D)";
-    document.getElementById("bar-depth").style.width = `${Math.round(zDepthNorm * 100)}%`;
+    if (document.getElementById("gauge-depth")) document.getElementById("gauge-depth").textContent = zDepthNorm < 0.4 ? "NEAR (3D)" : zDepthNorm > 0.7 ? "FAR (3D)" : "MID (3D)";
+    if (document.getElementById("bar-depth")) document.getElementById("bar-depth").style.width = `${Math.round(zDepthNorm * 100)}%`;
 
-    document.getElementById("gauge-vibrato").textContent = `${rightMetrics.vibratoDepth} %`;
-    document.getElementById("bar-vibrato").style.width = `${rightMetrics.vibratoDepth}%`;
-
-    document.getElementById("gauge-reverb").textContent = `${rightMetrics.reverbWet} %`;
-    document.getElementById("bar-reverb").style.width = `${rightMetrics.reverbWet}%`;
+    if (document.getElementById("gauge-vibrato")) document.getElementById("gauge-vibrato").textContent = `${rightMetrics.vibratoDepth} %`;
+    if (document.getElementById("bar-vibrato")) document.getElementById("bar-vibrato").style.width = `${rightMetrics.vibratoDepth}%`;
 
     const panText = panVal < -0.1 ? `L ${Math.abs(Math.round(panVal * 100))}%` :
-                    panVal > 0.1 ? `R ${Math.round(panVal * 100)}%` : "CENTER (0)";
-    document.getElementById("gauge-pan").textContent = panText;
-    document.getElementById("bar-pan").style.width = `${((panVal + 1.0) / 2.0) * 100}%`;
+                    panVal > 0.1 ? `R ${Math.round(panVal * 100)}%` : "CENTER";
+    if (document.getElementById("gauge-pan")) document.getElementById("gauge-pan").textContent = panText;
+    if (document.getElementById("bar-pan")) document.getElementById("bar-pan").style.width = `${((panVal + 1.0) / 2.0) * 100}%`;
 }
 
 // ============================================================================
@@ -813,6 +829,7 @@ function processRightHandExpression(landmarks) {
 // ============================================================================
 function initBackgroundEnvironmentEngine() {
     const bgCanvas = document.getElementById("reactive-bg-canvas");
+    if (!bgCanvas) return;
     const ctx = bgCanvas.getContext("2d");
 
     function resizeBg() {
@@ -936,6 +953,7 @@ function getDebouncedFingerCount(rawCount) {
 
 function onResults(results) {
     const canvasElement = document.getElementById("output-canvas");
+    if (!canvasElement) return;
     const canvasCtx = canvasElement.getContext("2d");
 
     const dpr = window.devicePixelRatio || 1;
@@ -947,7 +965,8 @@ function onResults(results) {
     fpsCount++;
     const now = Date.now();
     if (now - lastFrameTime >= 1000) {
-        document.getElementById("camera-fps").textContent = `FPS: ${fpsCount}`;
+        const fpsEl = document.getElementById("camera-fps");
+        if (fpsEl) fpsEl.textContent = `FPS: ${fpsCount}`;
         fpsCount = 0;
         lastFrameTime = now;
     }
@@ -986,22 +1005,26 @@ function onResults(results) {
     }
 
     const leftBadge = document.getElementById("left-hand-status");
-    if (leftFound) {
-        leftBadge.textContent = "SOL EL: AKTİF";
-        leftBadge.classList.add("active");
-    } else {
-        leftBadge.textContent = "BEKLENİYOR";
-        leftBadge.classList.remove("active");
-        triggerChordTransition(0);
+    if (leftBadge) {
+        if (leftFound) {
+            leftBadge.textContent = "SOL EL: AKTİF";
+            leftBadge.classList.add("active");
+        } else {
+            leftBadge.textContent = "BEKLENİYOR";
+            leftBadge.classList.remove("active");
+            triggerChordTransition(0);
+        }
     }
 
     const rightBadge = document.getElementById("right-hand-status");
-    if (rightFound) {
-        rightBadge.textContent = "SAĞ EL: AKTİF";
-        rightBadge.classList.add("active");
-    } else {
-        rightBadge.textContent = "BEKLENİYOR";
-        rightBadge.classList.remove("active");
+    if (rightBadge) {
+        if (rightFound) {
+            rightBadge.textContent = "SAĞ EL: AKTİF";
+            rightBadge.classList.add("active");
+        } else {
+            rightBadge.textContent = "SAĞ EL: BEKLENİYOR";
+            rightBadge.classList.remove("active");
+        }
     }
 
     canvasCtx.restore();
@@ -1009,6 +1032,7 @@ function onResults(results) {
 
 function startVisualizer() {
     const canvas = document.getElementById("audio-visualizer");
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const bufferLength = analyserNode.frequencyBinCount;
     const timeData = new Uint8Array(bufferLength);
@@ -1102,10 +1126,23 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 7. EVENT LISTENERS
+// 7. MODULAR TAB SWITCHING & EVENT LISTENERS
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
+
+    // Tab Switching Logic
+    document.querySelectorAll(".rack-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".rack-tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+
+            btn.classList.add("active");
+            const targetTab = btn.getAttribute("data-tab");
+            const panel = document.getElementById(targetTab);
+            if (panel) panel.classList.add("active");
+        });
+    });
 
     const videoElement = document.getElementById("input-video");
 
@@ -1135,12 +1172,16 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     const helpDrawer = document.getElementById("help-drawer");
-    document.getElementById("btn-toggle-guide").addEventListener("click", () => {
-        helpDrawer.classList.toggle("hidden");
-    });
-    document.getElementById("btn-close-guide").addEventListener("click", () => {
-        helpDrawer.classList.add("hidden");
-    });
+    if (document.getElementById("btn-toggle-guide")) {
+        document.getElementById("btn-toggle-guide").addEventListener("click", () => {
+            if (helpDrawer) helpDrawer.classList.toggle("hidden");
+        });
+    }
+    if (document.getElementById("btn-close-guide")) {
+        document.getElementById("btn-close-guide").addEventListener("click", () => {
+            if (helpDrawer) helpDrawer.classList.add("hidden");
+        });
+    }
 
     ["click", "touchstart", "mousedown", "keydown"].forEach(evt => {
         window.addEventListener(evt, () => {
@@ -1148,126 +1189,156 @@ window.addEventListener("DOMContentLoaded", () => {
         }, { passive: true });
     });
 
-    document.getElementById("btn-start-audio").addEventListener("click", (e) => {
-        e.stopPropagation();
-        initAudioEngine();
-    });
+    if (document.getElementById("btn-start-audio")) {
+        document.getElementById("btn-start-audio").addEventListener("click", (e) => {
+            e.stopPropagation();
+            initAudioEngine();
+        });
+    }
 
-    document.getElementById("btn-freeze-toggle").addEventListener("click", () => toggleSpectralFreeze());
-    document.getElementById("btn-save-preset").addEventListener("click", () => savePresetToStorage());
-    document.getElementById("btn-load-preset").addEventListener("click", () => loadPresetFromStorage());
+    if (document.getElementById("btn-freeze-toggle")) document.getElementById("btn-freeze-toggle").addEventListener("click", () => toggleSpectralFreeze());
+    if (document.getElementById("btn-save-preset")) document.getElementById("btn-save-preset").addEventListener("click", () => savePresetToStorage());
+    if (document.getElementById("btn-load-preset")) document.getElementById("btn-load-preset").addEventListener("click", () => loadPresetFromStorage());
 
-    document.getElementById("scope-mode-select").addEventListener("change", (e) => {
-        scopeMode = e.target.value;
-    });
+    if (document.getElementById("scope-mode-select")) {
+        document.getElementById("scope-mode-select").addEventListener("change", (e) => {
+            scopeMode = e.target.value;
+        });
+    }
 
-    document.getElementById("env-theme-select").addEventListener("change", (e) => {
-        envTheme = e.target.value;
-        const bar = document.getElementById("midi-status-bar");
-        if (bar) bar.textContent = `Audio-Reactive World Active (${e.target.options[e.target.selectedIndex].text})`;
-    });
+    if (document.getElementById("env-theme-select")) {
+        document.getElementById("env-theme-select").addEventListener("change", (e) => {
+            envTheme = e.target.value;
+            const bar = document.getElementById("midi-status-bar");
+            if (bar) bar.textContent = `Audio-Reactive World Active (${e.target.options[e.target.selectedIndex].text})`;
+        });
+    }
 
-    document.getElementById("slider-eq-bass").addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        document.getElementById("val-eq-bass").textContent = `${val > 0 ? '+' : ''}${val} dB`;
-        if (eqBassNode && audioCtx) {
-            eqBassNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
-        }
-    });
+    if (document.getElementById("slider-eq-bass")) {
+        document.getElementById("slider-eq-bass").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-eq-bass")) document.getElementById("val-eq-bass").textContent = `${val > 0 ? '+' : ''}${val} dB`;
+            if (eqBassNode && audioCtx) {
+                eqBassNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+            }
+        });
+    }
 
-    document.getElementById("slider-eq-mid").addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        document.getElementById("val-eq-mid").textContent = `${val > 0 ? '+' : ''}${val} dB`;
-        if (eqMidNode && audioCtx) {
-            eqMidNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
-        }
-    });
+    if (document.getElementById("slider-eq-mid")) {
+        document.getElementById("slider-eq-mid").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-eq-mid")) document.getElementById("val-eq-mid").textContent = `${val > 0 ? '+' : ''}${val} dB`;
+            if (eqMidNode && audioCtx) {
+                eqMidNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+            }
+        });
+    }
 
-    document.getElementById("slider-eq-treble").addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        document.getElementById("val-eq-treble").textContent = `${val > 0 ? '+' : ''}${val} dB`;
-        if (eqTrebleNode && audioCtx) {
-            eqTrebleNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
-        }
-    });
+    if (document.getElementById("slider-eq-treble")) {
+        document.getElementById("slider-eq-treble").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-eq-treble")) document.getElementById("val-eq-treble").textContent = `${val > 0 ? '+' : ''}${val} dB`;
+            if (eqTrebleNode && audioCtx) {
+                eqTrebleNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+            }
+        });
+    }
 
-    document.getElementById("btn-metro-toggle").addEventListener("click", () => toggleMetronome());
-    document.getElementById("btn-loop-rec").addEventListener("click", () => toggleLoopRecording());
-    document.getElementById("btn-loop-play").addEventListener("click", () => startLoopPlayback());
-    document.getElementById("btn-loop-clear").addEventListener("click", () => clearLoop());
-    document.getElementById("btn-rec-wav").addEventListener("click", () => toggleWavRecording());
+    if (document.getElementById("btn-metro-toggle")) document.getElementById("btn-metro-toggle").addEventListener("click", () => toggleMetronome());
+    if (document.getElementById("btn-loop-rec")) document.getElementById("btn-loop-rec").addEventListener("click", () => toggleLoopRecording());
+    if (document.getElementById("btn-loop-play")) document.getElementById("btn-loop-play").addEventListener("click", () => startLoopPlayback());
+    if (document.getElementById("btn-loop-clear")) document.getElementById("btn-loop-clear").addEventListener("click", () => clearLoop());
+    if (document.getElementById("btn-rec-wav")) document.getElementById("btn-rec-wav").addEventListener("click", () => toggleWavRecording());
 
-    document.getElementById("scale-mode-select").addEventListener("change", (e) => {
-        currentScaleMode = e.target.value;
-        if (currentChordIndex >= 0) {
-            const idx = currentChordIndex;
-            currentChordIndex = -1;
-            triggerChordTransition(idx);
-        }
-    });
+    if (document.getElementById("scale-mode-select")) {
+        document.getElementById("scale-mode-select").addEventListener("change", (e) => {
+            currentScaleMode = e.target.value;
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
+        });
+    }
 
-    document.getElementById("midi-select").addEventListener("change", (e) => {
-        const val = e.target.value;
-        if (val === "none" || !midiAccess) {
-            selectedMidiOutput = null;
-        } else {
-            selectedMidiOutput = midiAccess.outputs.get(val);
-        }
-    });
+    if (document.getElementById("midi-select")) {
+        document.getElementById("midi-select").addEventListener("change", (e) => {
+            const val = e.target.value;
+            if (val === "none" || !midiAccess) {
+                selectedMidiOutput = null;
+            } else {
+                selectedMidiOutput = midiAccess.outputs.get(val);
+            }
+        });
+    }
 
-    document.getElementById("preset-select").addEventListener("change", (e) => {
-        currentPreset = e.target.value;
-        if (currentChordIndex >= 0) {
-            const idx = currentChordIndex;
-            currentChordIndex = -1;
-            triggerChordTransition(idx);
-        }
-    });
+    if (document.getElementById("preset-select")) {
+        document.getElementById("preset-select").addEventListener("change", (e) => {
+            currentPreset = e.target.value;
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
+        });
+    }
 
-    document.getElementById("key-select").addEventListener("change", (e) => {
-        currentKey = e.target.value;
-        if (currentChordIndex >= 0) {
-            const idx = currentChordIndex;
-            currentChordIndex = -1;
-            triggerChordTransition(idx);
-        }
-    });
+    if (document.getElementById("key-select")) {
+        document.getElementById("key-select").addEventListener("change", (e) => {
+            currentKey = e.target.value;
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
+        });
+    }
 
-    document.getElementById("octave-select").addEventListener("change", (e) => {
-        currentOctaveShift = parseInt(e.target.value);
-        if (currentChordIndex >= 0) {
-            const idx = currentChordIndex;
-            currentChordIndex = -1;
-            triggerChordTransition(idx);
-        }
-    });
+    if (document.getElementById("octave-select")) {
+        document.getElementById("octave-select").addEventListener("change", (e) => {
+            currentOctaveShift = parseInt(e.target.value);
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
+        });
+    }
 
-    document.getElementById("arp-mode-select").addEventListener("change", (e) => {
-        arpMode = e.target.value;
-        arpStepIndex = 0;
-        if (currentChordIndex >= 0) {
-            const idx = currentChordIndex;
-            currentChordIndex = -1;
-            triggerChordTransition(idx);
-        }
-    });
+    if (document.getElementById("arp-mode-select")) {
+        document.getElementById("arp-mode-select").addEventListener("change", (e) => {
+            arpMode = e.target.value;
+            arpStepIndex = 0;
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
+        });
+    }
 
-    document.getElementById("slider-bpm").addEventListener("input", (e) => {
-        arpBpm = parseInt(e.target.value);
-        document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
-        if (isMetronomeActive) startMetronomeLoop();
-    });
+    if (document.getElementById("slider-bpm")) {
+        document.getElementById("slider-bpm").addEventListener("input", (e) => {
+            arpBpm = parseInt(e.target.value);
+            if (document.getElementById("val-bpm")) document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
+            if (isMetronomeActive) startMetronomeLoop();
+        });
+    }
 
-    document.getElementById("slider-glide").addEventListener("input", (e) => {
-        portamentoTime = parseFloat(e.target.value);
-        document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
-    });
+    if (document.getElementById("slider-glide")) {
+        document.getElementById("slider-glide").addEventListener("input", (e) => {
+            portamentoTime = parseFloat(e.target.value);
+            if (document.getElementById("val-glide")) document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
+        });
+    }
 
-    document.getElementById("slider-volume").addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
-        if (masterGain) {
-            masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
-        }
-    });
+    if (document.getElementById("slider-volume")) {
+        document.getElementById("slider-volume").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-volume")) document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
+            if (masterGain) {
+                masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+            }
+        });
+    }
 });
