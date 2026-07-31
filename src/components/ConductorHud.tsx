@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Conductor HUD Component
-   Visual HUD for Orchestra Conductor Mode (BPM gauge, dynamics, beat, section)
+   Visual HUD for Orchestra Conductor Mode (Piece selector, BPM gauge, dynamics, badges)
    ═══════════════════════════════════════════════════════════════════ */
 
 import React from 'react';
@@ -29,29 +29,23 @@ export const ConductorHud: React.FC<ConductorHudProps> = ({
   );
 
   return (
-    <div className="conductor-hud">
-      {/* Top Conductor Header */}
-      <div className="control-bar">
-        <div className="control-bar__left">
-          <span className="control-bar__logo">🎼 Conductor Mode</span>
+    <>
+      {/* Top Conductor Control Row (embedded in header right area) */}
+      <div className="conductor-header-bar">
+        <select
+          className="glass-select"
+          value={pieceOptions.findIndex((p) => p.id === currentPiece.id)}
+          onChange={(e) => onPieceSelect(Number(e.target.value))}
+        >
+          {pieceOptions.map((p, idx) => (
+            <option key={p.id} value={idx}>
+              🎼 {p.title} ({p.composer})
+            </option>
+          ))}
+        </select>
 
-          <select
-            className="glass-select"
-            value={pieceOptions.findIndex((p) => p.id === currentPiece.id)}
-            onChange={(e) => onPieceSelect(Number(e.target.value))}
-          >
-            {pieceOptions.map((p, idx) => (
-              <option key={p.id} value={idx}>
-                {p.title} ({p.composer})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="control-bar__right">
-          {conductorState.crescendo && <span className="badge badge--crescendo">📈 CRESCENDO</span>}
-          {conductorState.diminuendo && <span className="badge badge--diminuendo">📉 DIMINUENDO</span>}
-        </div>
+        {conductorState.crescendo && <span className="badge badge--crescendo">📈 CRESCENDO</span>}
+        {conductorState.diminuendo && <span className="badge badge--diminuendo">📉 DIMINUENDO</span>}
       </div>
 
       {/* Center Conducting Meter */}
@@ -76,6 +70,6 @@ export const ConductorHud: React.FC<ConductorHudProps> = ({
           Section Focus: <strong>{SECTION_LABELS[conductorState.sectionFocus]}</strong>
         </div>
       </div>
-    </div>
+    </>
   );
 };
