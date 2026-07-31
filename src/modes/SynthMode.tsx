@@ -1,11 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Synth Mode Component
-   Gesture-controlled synthesizer mode (GestureSynth style)
+   Gesture-controlled synthesizer mode with PianoRoll keyboard
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Stage } from '../components/Stage';
 import { ChordDisplay } from '../components/ChordDisplay';
+import { PianoRoll } from '../components/PianoRoll';
 import { Recorder } from '../components/Recorder';
 import { getSynthEngine } from '../audio/SynthEngine';
 import { buildChord, fingerCountToScaleDegree, fingerCountToComplexity, keyNameToIndex } from '../audio/chords';
@@ -113,10 +114,12 @@ export const SynthMode: React.FC<SynthModeProps> = ({
       } else {
         synthEngine.releaseAll();
         setCurrentChordName(null);
+        setCurrentNotes([]);
       }
     } else {
       synthEngine.releaseAll();
       setCurrentChordName(null);
+      setCurrentNotes([]);
     }
   }, [leftHand, rightHand, currentKey, isMinorLocked, isBassEnabled]);
 
@@ -136,6 +139,8 @@ export const SynthMode: React.FC<SynthModeProps> = ({
         leftHandActive={!!leftHand}
         rightHandActive={!!rightHand}
       />
+
+      <PianoRoll activeNotes={currentNotes} />
 
       <Recorder stageContainerRef={stageContainerRef} />
     </Stage>
