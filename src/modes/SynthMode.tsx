@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Synth Mode Component
-   Gesture-controlled synthesizer mode with PianoRoll keyboard
+   Gesture-controlled synthesizer mode with PianoRoll keyboard & unmount cleanup
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -46,6 +46,13 @@ export const SynthMode: React.FC<SynthModeProps> = ({
 
   const lastChordRef = useRef<string | null>(null);
   const chordStartTimeRef = useRef<number>(0);
+
+  // Clean up audio on unmount when tab switches away
+  useEffect(() => {
+    return () => {
+      synthEngine.releaseAll();
+    };
+  }, []);
 
   // Frame processing for gestures → synth engine
   useEffect(() => {

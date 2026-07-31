@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Conductor Mode Component
-   Orchestra Conducting mode (Conduct famous classical symphonies with hands!)
+   Orchestra Conducting mode (Fixes freeze by shallow state equality check)
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -36,9 +36,17 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
 
   const [selectedPieceIndex, setSelectedPieceIndex] = useState(0);
 
+  // Piece change
   useEffect(() => {
     orchestraEngine.setPiece(selectedPieceIndex);
   }, [selectedPieceIndex]);
+
+  // Clean cleanup on unmount when user switches away from Conductor tab
+  useEffect(() => {
+    return () => {
+      orchestraEngine.pauseConducting();
+    };
+  }, []);
 
   // Frame processing loop for conductor gestures
   useEffect(() => {
@@ -47,17 +55,33 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
       return;
     }
 
-    // Hands are in frame -> start/resume conducting
+    // Hands in frame -> resume conducting
     orchestraEngine.startConducting();
 
     const timestamp = performance.now();
     const state = conductorProcessorRef.current.process(leftHand, rightHand, timestamp);
-    setConductorState(state);
 
-    // Apply conductor controls continuously
+    // Apply audio controls to Tone.js engine directly (high performance, no React re-render needed)
     orchestraEngine.setBpm(state.bpm);
     orchestraEngine.setDynamics(state.dynamics);
     orchestraEngine.setSectionFocus(state.sectionFocus);
+
+    // ONLY trigger React re-render when UI state properties actually change!
+    // Prevents infinite re-render loop that causes browser freeze!
+    setConductorState((prev) => {
+      const bpmChanged = prev.bpm !== state.bpm;
+      const dynamicsChanged = Math.abs(prev.dynamics - state.dynamics) > 0.08;
+      const focusChanged = prev.sectionFocus !== state.sectionFocus;
+      const beatChanged = prev.beatDetected !== state.beatDetected;
+      const crescChanged = prev.crescendo !== state.crescendo;
+      const dimChanged = prev.diminuendo !== state.diminuendo;
+
+      if (!bpmChanged && !dynamicsChanged && !focusChanged && !beatChanged && !crescChanged && !dimChanged) {
+        return prev; // Same state reference -> React skips re-render!
+      }
+
+      return state;
+    });
   }, [leftHand, rightHand]);
 
   return (
