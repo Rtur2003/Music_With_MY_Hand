@@ -1,6 +1,16 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - IMMERSION VISUAL EDITION (v7.3)
+ * AURASYNTH PRO VST3 ULTIMATE - FLAGSHIP HIGH-FIDELITY & VISUAL SPECTACLE v8.0
+ * ============================================================================
+ * Features:
+ *  1. Dual-Oscillator Stereo Chorus & Sub-Bass Foundation Layer
+ *  2. Analog Soft-Clipping Tube Saturator (WaveShaper Distortion Curve)
+ *  3. Generative 3D Audio-Reactive Visualizer Spectacle Engine:
+ *      - 🌌 Quantum Hyperspace 3D Starfield Warp
+ *      - 🔮 Generative Audio-Reactive Kaleidoscope Polygons
+ *      - ⚡ Trigonometric Neon Aurora Wave Lasers
+ *      - 💥 Kinetic Particle Bursts & Comet Shockwaves
+ *  4. 🎲 Chaos / Dynamic Procedural Art Auto-Mutation Engine
  * ============================================================================
  */
 
@@ -8,6 +18,7 @@
 let audioCtx = null;
 let masterGain = null;
 let compressorNode = null;
+let tubeSaturatorNode = null; // Analog Soft-Clipping Saturator
 let stereoPanner = null;
 let filterNode = null;
 
@@ -28,14 +39,20 @@ let isSpectralFrozen = false;
 // Scope Mode State
 let scopeMode = "wave";
 
-// Environment Visual Engine State (Lightweight 60 FPS)
-let envTheme = "cyberpunk";
-const ENV_THEMES_LIST = ["cyberpunk", "symphony", "cosmos", "plasma"];
+// GENERATIVE VISUAL SPECTACLE ENGINE STATE
+let envTheme = "warp"; // "warp", "polygons", "aurora", "burst"
+const ENV_THEMES_LIST = ["warp", "polygons", "aurora", "burst"];
 let envThemeIndex = 0;
 
+let isChaosArtMode = false;
+let chaosHueOffset = 0;
+let polygonRotationAngle = 0;
+
+let bgStars = [];
 let bgParticles = [];
 let bgShockwaves = [];
-const NUM_BG_PARTICLES = 60;
+const NUM_WARP_STARS = 150;
+const NUM_BG_PARTICLES = 80;
 
 // Immersion Cinema Mode State
 let isImmersionMode = false;
@@ -73,7 +90,7 @@ let currentKey = "C";
 let currentScaleMode = "major";
 let currentOctaveShift = 0;
 let portamentoTime = 0.25;
-let filterResonance = 2.0;
+let filterResonance = 2.5;
 
 // Arpeggiator State
 let arpMode = "off";
@@ -209,7 +226,7 @@ function sendMidiChordNotes(midiMidiNotes) {
 }
 
 // ============================================================================
-// 2. IMMERSION CINEMA MODE & ATMOSPHERE SWITCHER
+// 2. IMMERSION MODE & GENERATIVE VISUAL SWITCHER
 // ============================================================================
 function toggleImmersionMode() {
     isImmersionMode = !isImmersionMode;
@@ -233,21 +250,43 @@ function cycleNextEnvironment() {
     if (envSelect) envSelect.value = envTheme;
 
     const themeNames = {
-        cyberpunk: "🌌 Cyberpunk Neon",
-        symphony: "🎻 Symphony Amber",
-        cosmos: "🪐 Deep Cosmos",
-        plasma: "⚡ Plasma Arc"
+        warp: "🌌 Quantum 3D Warp",
+        polygons: "🔮 Crystalline Polygons",
+        aurora: "⚡ Neon Laser Aurora",
+        burst: "💥 Particle Fireworks"
     };
 
     const nextBtn = document.getElementById("btn-next-env-gesture");
     if (nextBtn) nextBtn.textContent = `🌌 MEKAN: ${themeNames[envTheme]}`;
 
-    console.log(`[ENVIRONMENT SWITCH] Switched to: ${envTheme}`);
+    console.log(`[GENERATIVE VISUAL] Switched to: ${envTheme}`);
+}
+
+function toggleChaosArtMode() {
+    isChaosArtMode = !isChaosArtMode;
+    const btn = document.getElementById("btn-next-env-gesture");
+    if (isChaosArtMode) {
+        if (btn) btn.textContent = "🎲 CHAOS ART (ACTIVE)";
+    } else {
+        cycleNextEnvironment();
+    }
 }
 
 // ============================================================================
-// 3. AUDIO ENGINE & DYNAMICS COMPRESSOR INIT
+// 3. HIGH-FIDELITY STUDIO DSP AUDIO ENGINE (TUBE SATURATOR & SUB-BASS)
 // ============================================================================
+function makeDistortionCurve(amount) {
+    const k = typeof amount === 'number' ? amount : 20;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+}
+
 function getOrCreateWavetable(presetKey) {
     if (periodicWavesCache[presetKey]) return periodicWavesCache[presetKey];
 
@@ -278,6 +317,11 @@ function initAudioEngine() {
 
     masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
+
+    // Soft-Clipping Tube Saturator Waveshaper
+    tubeSaturatorNode = audioCtx.createWaveShaper();
+    tubeSaturatorNode.curve = makeDistortionCurve(8); // Subtle analog tube warmth
+    tubeSaturatorNode.oversample = '4x';
 
     compressorNode = audioCtx.createDynamicsCompressor();
     compressorNode.threshold.setValueAtTime(-18, audioCtx.currentTime);
@@ -316,7 +360,7 @@ function initAudioEngine() {
     filterNode.Q.setValueAtTime(filterResonance, audioCtx.currentTime);
 
     subOscGain = audioCtx.createGain();
-    subOscGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    subOscGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
 
     delayNode = audioCtx.createDelay();
     delayNode.delayTime.setValueAtTime(0.28, audioCtx.currentTime);
@@ -330,20 +374,22 @@ function initAudioEngine() {
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
 
+    // Routing Chain: Filter -> EQ -> Panner -> Tube Saturator -> Compressor -> Master
     filterNode.connect(eqBassNode);
     eqBassNode.connect(eqMidNode);
     eqMidNode.connect(eqTrebleNode);
     eqTrebleNode.connect(stereoPanner);
 
     subOscGain.connect(stereoPanner);
-    stereoPanner.connect(compressorNode);
+    stereoPanner.connect(tubeSaturatorNode);
+    tubeSaturatorNode.connect(compressorNode);
     compressorNode.connect(masterGain);
 
     filterNode.connect(delayNode);
     delayNode.connect(delayFeedback);
     delayFeedback.connect(delayNode);
     delayNode.connect(delayGain);
-    delayGain.connect(compressorNode);
+    delayGain.connect(tubeSaturatorNode);
 
     masterGain.connect(analyserNode);
     analyserNode.connect(audioCtx.destination);
@@ -360,7 +406,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Immersive Engine Active.");
+    console.log("[AuraSynth PRO] High-Fidelity Tube DSP Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -454,7 +500,7 @@ function loadPresetFromStorage() {
         portamentoTime = data.glide || 0.25;
         arpBpm = data.bpm || 120;
         arpMode = data.arpMode || "off";
-        envTheme = data.envTheme || "cyberpunk";
+        envTheme = data.envTheme || "warp";
 
         document.querySelectorAll(".preset-pill").forEach(pill => {
             if (pill.getAttribute("data-preset") === currentPreset) {
@@ -489,7 +535,7 @@ function loadPresetFromStorage() {
 }
 
 // ============================================================================
-// 4. SYNTHESIS & GESTURE LOOPER ENGINE
+// 4. DUAL-OSCILLATOR CHORUS & SUB-BASS SOUND SYNTHESIS
 // ============================================================================
 function triggerChordTransition(fingerCount) {
     if (!audioCtx || !isAudioRunning) return;
@@ -518,6 +564,10 @@ function triggerChordTransition(fingerCount) {
             maxRadius: Math.max(window.innerWidth, window.innerHeight) * 0.7,
             alpha: 1.0
         });
+
+        if (isChaosArtMode) {
+            chaosHueOffset = Math.random() * 360;
+        }
     }
 
     if (chordData.freqs.length === 0) {
@@ -545,8 +595,9 @@ function triggerChordTransition(fingerCount) {
     targetFreqs.forEach((freq, idx) => {
         if (idx < activeVoices.length) {
             const voice = activeVoices[idx];
-            voice.oscillators.forEach(osc => {
-                osc.frequency.setTargetAtTime(freq, now, portamentoTime);
+            voice.oscillators.forEach((osc, i) => {
+                const detuneOffset = i === 1 ? 6 : i === 2 ? -12 : 0;
+                osc.frequency.setTargetAtTime(freq * Math.pow(2, detuneOffset / 12), now, portamentoTime);
             });
             voice.gain.gain.setTargetAtTime(0.22 / numVoicesNeeded, now, portamentoTime);
         } else {
@@ -554,20 +605,44 @@ function triggerChordTransition(fingerCount) {
             voiceGain.gain.setValueAtTime(0.0001, now);
             voiceGain.gain.setTargetAtTime(0.22 / numVoicesNeeded, now, 0.12);
 
-            const osc = audioCtx.createOscillator();
-            osc.setPeriodicWave(customWave);
-            osc.frequency.setValueAtTime(freq, now);
+            // Main Oscillator
+            const osc1 = audioCtx.createOscillator();
+            osc1.setPeriodicWave(customWave);
+            osc1.frequency.setValueAtTime(freq, now);
 
-            osc.connect(voiceGain);
-            osc.start(now);
+            // Stereo Detuned Chorus Oscillator (+6 Cents)
+            const osc2 = audioCtx.createOscillator();
+            osc2.setPeriodicWave(customWave);
+            osc2.frequency.setValueAtTime(freq * 1.0035, now);
+
+            // Sub-Bass Oscillator (-1 Octave Sine)
+            const oscSub = audioCtx.createOscillator();
+            oscSub.type = "sine";
+            oscSub.frequency.setValueAtTime(freq * 0.5, now);
+
+            const subGainLocal = audioCtx.createGain();
+            subGainLocal.gain.setValueAtTime(0.12, now);
+
+            osc1.connect(voiceGain);
+            osc2.connect(voiceGain);
+            oscSub.connect(subGainLocal);
+            subGainLocal.connect(voiceGain);
+
+            osc1.start(now);
+            osc2.start(now);
+            oscSub.start(now);
 
             voiceGain.connect(filterNode);
 
             activeVoices.push({
                 gain: voiceGain,
-                oscillators: [osc],
+                oscillators: [osc1, osc2, oscSub],
                 stop: function() {
-                    try { osc.stop(); osc.disconnect(); } catch(e){}
+                    try {
+                        osc1.stop(); osc1.disconnect();
+                        osc2.stop(); osc2.disconnect();
+                        oscSub.stop(); oscSub.disconnect();
+                    } catch(e){}
                     voiceGain.disconnect();
                 }
             });
@@ -827,7 +902,6 @@ function processRightHandExpression(landmarks) {
     const indexTip = landmarks[8];
     const thumbTip = landmarks[4];
 
-    // High gesture detection for Atmosphere switching (Right hand index held high near Y < 0.15)
     if (indexTip.y < 0.12 && nowTime - (rightMetrics.lastEnvSwitchTime || 0) > 2000) {
         rightMetrics.lastEnvSwitchTime = nowTime;
         cycleNextEnvironment();
@@ -892,7 +966,7 @@ function processRightHandExpression(landmarks) {
 }
 
 // ============================================================================
-// 6. AUDIO-REACTIVE BACKGROUND ENGINE
+// 6. GENERATIVE 3D AUDIO-REACTIVE VISUAL ENGINE (HIGH-ART PROCEDURAL CANVAS)
 // ============================================================================
 function initBackgroundEnvironmentEngine() {
     const bgCanvas = document.getElementById("reactive-bg-canvas");
@@ -906,6 +980,18 @@ function initBackgroundEnvironmentEngine() {
     resizeBg();
     window.addEventListener("resize", resizeBg);
 
+    // Initialize 3D Warp Stars
+    bgStars = [];
+    for (let i = 0; i < NUM_WARP_STARS; i++) {
+        bgStars.push({
+            x: (Math.random() - 0.5) * window.innerWidth * 2,
+            y: (Math.random() - 0.5) * window.innerHeight * 2,
+            z: Math.random() * window.innerWidth,
+            pz: Math.random() * window.innerWidth
+        });
+    }
+
+    // Initialize Kinetic Particles
     bgParticles = [];
     for (let i = 0; i < NUM_BG_PARTICLES; i++) {
         bgParticles.push({
@@ -924,63 +1010,136 @@ function initBackgroundEnvironmentEngine() {
 
         const w = bgCanvas.width;
         const h = bgCanvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
 
         let avgEnergy = 0;
+        let bassEnergy = 0;
         if (analyserNode && isAudioRunning) {
             analyserNode.getByteFrequencyData(freqArray);
             let sum = 0;
             for (let i = 0; i < 64; i++) sum += freqArray[i];
             avgEnergy = sum / 64.0 / 255.0;
+
+            let bSum = 0;
+            for (let b = 0; b < 12; b++) bSum += freqArray[b];
+            bassEnergy = bSum / 12.0 / 255.0;
         }
 
-        ctx.fillStyle = "rgba(11, 13, 19, 0.25)";
+        ctx.fillStyle = "rgba(9, 10, 15, 0.22)";
         ctx.fillRect(0, 0, w, h);
 
+        polygonRotationAngle += 0.008 + avgEnergy * 0.03;
+
+        // MODE 1: QUANTUM 3D WARP
+        if (envTheme === "warp") {
+            const speed = 3 + avgEnergy * 25;
+            ctx.strokeStyle = `hsla(${190 + chaosHueOffset + avgEnergy * 80}, 100%, 65%, 0.7)`;
+            ctx.lineWidth = 1.5;
+
+            bgStars.forEach(star => {
+                star.pz = star.z;
+                star.z -= speed;
+
+                if (star.z <= 0) {
+                    star.z = w;
+                    star.pz = w;
+                    star.x = (Math.random() - 0.5) * w * 2;
+                    star.y = (Math.random() - 0.5) * h * 2;
+                }
+
+                const k = 256 / star.z;
+                const px = star.x * k + cx;
+                const py = star.y * k + cy;
+
+                const pk = 256 / star.pz;
+                const prevX = star.x * pk + cx;
+                const prevY = star.y * pk + cy;
+
+                if (px >= 0 && px <= w && py >= 0 && py <= h) {
+                    ctx.beginPath();
+                    ctx.moveTo(prevX, prevY);
+                    ctx.lineTo(px, py);
+                    ctx.stroke();
+                }
+            });
+        }
+        // MODE 2: CRYSTALLINE POLYGONS
+        else if (envTheme === "polygons") {
+            const numSides = isChaosArtMode ? 5 + Math.floor(avgEnergy * 4) : 6;
+            const radius = 100 + bassEnergy * 180;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(polygonRotationAngle);
+
+            for (let layer = 1; layer <= 3; layer++) {
+                ctx.beginPath();
+                const r = radius * (layer * 0.5);
+                for (let i = 0; i < numSides; i++) {
+                    const angle = (i * 2 * Math.PI) / numSides;
+                    const x = r * Math.cos(angle);
+                    const y = r * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = `hsla(${(chaosHueOffset + layer * 60 + avgEnergy * 120) % 360}, 100%, 60%, ${0.8 - layer * 0.2})`;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        // MODE 3: NEON AURORA SINE WAVES
+        else if (envTheme === "aurora") {
+            ctx.lineWidth = 3;
+            for (let wave = 0; wave < 3; wave++) {
+                ctx.beginPath();
+                ctx.strokeStyle = `hsla(${(chaosHueOffset + wave * 90 + avgEnergy * 140) % 360}, 100%, 65%, 0.7)`;
+                for (let x = 0; x < w; x += 10) {
+                    const y = cy + Math.sin(x * 0.008 + polygonRotationAngle * (wave + 1)) * (50 + bassEnergy * 150) + (wave - 1) * 60;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+        // MODE 4: KINETIC PARTICLE BURST
+        else {
+            bgParticles.forEach(p => {
+                p.x += p.vx * (1.0 + avgEnergy * 3.5);
+                p.y += p.vy * (1.0 + avgEnergy * 3.5);
+
+                if (p.x < 0) p.x = w;
+                if (p.x > w) p.x = 0;
+                if (p.y < 0) p.y = h;
+                if (p.y > h) p.y = 0;
+
+                const scale = p.radius * (1.0 + bassEnergy * 3.0);
+                const colorStr = `hsla(${(chaosHueOffset + avgEnergy * 180) % 360}, 100%, 60%, 0.75)`;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, scale, 0, Math.PI * 2);
+                ctx.fillStyle = colorStr;
+                ctx.fill();
+            });
+        }
+
+        // Draw Shockwave Pulses on Every Chord Transition
         for (let s = bgShockwaves.length - 1; s >= 0; s--) {
             const shock = bgShockwaves[s];
             ctx.beginPath();
             ctx.arc(shock.x, shock.y, shock.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = envTheme === "cyberpunk" ? `rgba(0, 195, 255, ${shock.alpha})` :
-                              envTheme === "symphony" ? `rgba(255, 204, 0, ${shock.alpha})` :
-                              envTheme === "plasma" ? `rgba(255, 59, 48, ${shock.alpha})` : `rgba(175, 82, 222, ${shock.alpha})`;
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = `hsla(${(chaosHueOffset + shock.radius) % 360}, 100%, 60%, ${shock.alpha})`;
+            ctx.lineWidth = 3;
             ctx.stroke();
 
-            shock.radius += 10 + avgEnergy * 12;
+            shock.radius += 10 + avgEnergy * 15;
             shock.alpha -= 0.025;
 
             if (shock.alpha <= 0 || shock.radius >= shock.maxRadius) {
                 bgShockwaves.splice(s, 1);
             }
         }
-
-        bgParticles.forEach(p => {
-            p.x += p.vx * (1.0 + avgEnergy * 2.5);
-            p.y += p.vy * (1.0 + avgEnergy * 2.5);
-
-            if (p.x < 0) p.x = w;
-            if (p.x > w) p.x = 0;
-            if (p.y < 0) p.y = h;
-            if (p.y > h) p.y = 0;
-
-            const scale = p.radius * (1.0 + avgEnergy * 2.0);
-            let colorStr = "";
-
-            if (envTheme === "cyberpunk") {
-                colorStr = `hsla(${190 + avgEnergy * 80}, 100%, 60%, 0.6)`;
-            } else if (envTheme === "symphony") {
-                colorStr = `hsla(${40 + avgEnergy * 30}, 100%, 55%, 0.6)`;
-            } else if (envTheme === "cosmos") {
-                colorStr = `hsla(${270 + avgEnergy * 60}, 100%, 65%, 0.6)`;
-            } else if (envTheme === "plasma") {
-                colorStr = `hsla(${10 + avgEnergy * 50}, 100%, 60%, 0.6)`;
-            }
-
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, scale, 0, Math.PI * 2);
-            ctx.fillStyle = colorStr;
-            ctx.fill();
-        });
     }
 
     renderBg();
@@ -1190,17 +1349,18 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 8. EVENT LISTENERS & KEYBOARD SHORTCUTS (H: Hide UI, M: Change Theme)
+// 8. EVENT LISTENERS & SHORTCUTS (H: Hide UI, M: Theme, C: Chaos)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
 
-    // Keyboard Shortcuts (H = Hide/Show UI, M = Cycle Atmosphere Theme)
     window.addEventListener("keydown", (e) => {
         if (e.key === "h" || e.key === "H") {
             toggleImmersionMode();
         } else if (e.key === "m" || e.key === "M") {
             cycleNextEnvironment();
+        } else if (e.key === "c" || e.key === "C") {
+            toggleChaosArtMode();
         }
     });
 
@@ -1214,7 +1374,6 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
     }
 
-    // Tab Switching Logic
     document.querySelectorAll(".rack-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".rack-tab-btn").forEach(b => b.classList.remove("active"));
@@ -1227,7 +1386,6 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Preset Pill Logic
     document.querySelectorAll(".preset-pill").forEach(pill => {
         pill.addEventListener("click", () => {
             document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));

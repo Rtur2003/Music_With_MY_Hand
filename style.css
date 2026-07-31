@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AURASYNTH PRO VST3 ULTIMATE - IMMERSION CINEMA MODE STYLING
+   AURASYNTH PRO VST3 ULTIMATE - GRAPHICAL HELP TILES & STYLING
    ========================================================================== */
 
 :root {
@@ -95,9 +95,7 @@ html, body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 204, 0, 0.3);
 }
 
-.immersion-pill-btn:hover {
-    transform: scale(1.05);
-}
+.immersion-pill-btn:hover { transform: scale(1.05); }
 
 .immersion-chord-badge {
     background: rgba(18, 20, 29, 0.85);
@@ -247,6 +245,44 @@ html, body {
     color: var(--led-cyan);
     box-shadow: 0 0 10px rgba(0, 195, 255, 0.25);
 }
+
+/* GRAPHICAL HIGH-TECH HELP DRAWER MODAL */
+.vst-help-drawer {
+    position: absolute;
+    top: 50px;
+    left: 40px;
+    right: 40px;
+    bottom: 50px;
+    background: rgba(14, 16, 24, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 195, 255, 0.3);
+    border-radius: var(--radius-md);
+    z-index: 200;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 195, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.vst-help-drawer.hidden { display: none; }
+
+.drawer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; }
+.drawer-title { font-family: var(--font-mono); font-weight: 800; font-size: 0.9rem; color: #fff; }
+.btn-close { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+
+.drawer-content-graphical { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%; overflow-y: auto; }
+.guide-card-section { background: rgba(20, 24, 36, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.section-tag { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--led-cyan); }
+.section-tag.purple { color: var(--led-purple); }
+
+.guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.guide-tile { background: #111420; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+.guide-tile.mute { border-color: rgba(255, 59, 48, 0.3); background: rgba(40, 15, 20, 0.6); }
+.tile-icon { font-size: 1.4rem; }
+.tile-title { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 800; color: #fff; }
+.tile-desc { font-size: 0.6rem; color: var(--text-secondary); }
 
 /* TAB PANELS */
 .tab-panel { display: none; height: 100%; overflow: hidden; }

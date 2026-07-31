@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraSynth Pro VST3 Ultimate - Immersive Visual Instrument</title>
+    <title>AuraSynth Pro VST3 Ultimate - Premium Hardware Synthesizer</title>
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,7 @@
     <!-- AUDIO-REACTIVE BACKGROUND ENVIRONMENT CANVAS -->
     <canvas id="reactive-bg-canvas"></canvas>
 
-    <!-- FLOATING IMMERSION MODE CONTROLS (VISIBLE WHEN UI IS HIDDEN) -->
+    <!-- FLOATING IMMERSION MODE CONTROLS -->
     <div id="immersion-hud" class="immersion-hud hidden">
         <button id="btn-exit-immersion" class="immersion-pill-btn">
             👁️ ARAYÜZÜ GÖSTER (H)
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="header-actions">
-                    <button id="btn-toggle-immersion" class="vst-immersion-btn" title="Arayüzü Gizle ve Görsel Şölene Geç">
+                    <button id="btn-toggle-immersion" class="vst-immersion-btn" title="Sinema Modu">
                         🙈 SİNEMA MODU
                     </button>
                     <button id="btn-start-audio" class="vst-power-btn">
@@ -78,33 +78,80 @@
                 <button class="rack-tab-btn" data-tab="tab-env">🌌 3D MEKAN & MIDI</button>
             </nav>
 
-            <!-- QUICK HELP GUIDE MODAL -->
+            <!-- GRAPHICAL HIGH-TECH HELP GUIDE DRAWER (NO PLAIN TEXT) -->
             <div id="help-drawer" class="vst-help-drawer hidden">
                 <div class="drawer-header">
-                    <h3>📖 AURASYNTH PRO - HIZLI REHBER</h3>
+                    <span class="drawer-title">🎛️ AURASYNTH PRO - JEST İLE KONTROL REHBERİ</span>
                     <button id="btn-close-guide" class="btn-close">&times;</button>
                 </div>
-                <div class="drawer-content">
-                    <div class="guide-col">
-                        <h4>🖐️ SOL EL (AKORLAR)</h4>
-                        <ul>
-                            <li><strong>1 Parmak:</strong> Solo Lead</li>
-                            <li><strong>2 Parmak:</strong> Majör Akor</li>
-                            <li><strong>3 Parmak:</strong> Minör Akor</li>
-                            <li><strong>4 Parmak:</strong> 7'li Akor</li>
-                            <li><strong>5 Parmak:</strong> Ambient Pad</li>
-                            <li><strong>Yumruk:</strong> Sustur (Mute)</li>
-                        </ul>
+                <div class="drawer-content-graphical">
+                    <!-- LEFT HAND CHORD MATRIX CARDS -->
+                    <div class="guide-card-section">
+                        <div class="section-tag">🖐️ SOL EL: AKOR JEST MATRİSİ</div>
+                        <div class="guide-grid">
+                            <div class="guide-tile">
+                                <div class="tile-icon">☝️</div>
+                                <div class="tile-title">1 PARMAK</div>
+                                <div class="tile-desc">Solo Lead Nota</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">✌️</div>
+                                <div class="tile-title">2 PARMAK</div>
+                                <div class="tile-desc">Majör Akor</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">🤟</div>
+                                <div class="tile-title">3 PARMAK</div>
+                                <div class="tile-desc">Minör Akor</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">🖖</div>
+                                <div class="tile-title">4 PARMAK</div>
+                                <div class="tile-desc">7'li Caz Akoru</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">🖐️</div>
+                                <div class="tile-title">5 PARMAK</div>
+                                <div class="tile-desc">Ambient Pad 9th</div>
+                            </div>
+                            <div class="guide-tile mute">
+                                <div class="tile-icon">✊</div>
+                                <div class="tile-title">YUMRUK</div>
+                                <div class="tile-desc">Sustur (Mute)</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="guide-col">
-                        <h4>🎛️ SAĞ EL (EXPRESSION & 3D)</h4>
-                        <ul>
-                            <li><strong>Y-Aksı:</strong> Cutoff (MIDI CC #74)</li>
-                            <li><strong>X-Aksı:</strong> Stereo Pan (MIDI CC #10)</li>
-                            <li><strong>Z-Aksı:</strong> 3D Reverb Okyanusu</li>
-                            <li><strong>Titretme:</strong> Keman Vibratosu</li>
-                            <li><strong>Cımbız:</strong> Yankı Miktarı</li>
-                        </ul>
+
+                    <!-- RIGHT HAND EXPRESSION CARDS -->
+                    <div class="guide-card-section">
+                        <div class="section-tag purple">🎛️ SAĞ EL: 3D EXPRESSION & EFEKTLER</div>
+                        <div class="guide-grid">
+                            <div class="guide-tile">
+                                <div class="tile-icon">📐</div>
+                                <div class="tile-title">Y-AKS (DİKEY)</div>
+                                <div class="tile-desc">Cutoff Filter (CC74)</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">↔️</div>
+                                <div class="tile-title">X-AKS (YATAY)</div>
+                                <div class="tile-desc">Stereo Pan (CC10)</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">🔍</div>
+                                <div class="tile-title">Z-AKS (DERİNLİK)</div>
+                                <div class="tile-desc">3D Delay & Reverb</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">👋</div>
+                                <div class="tile-title">WIGGLE (TİTRETME)</div>
+                                <div class="tile-desc">Canlı Keman Vibrato</div>
+                            </div>
+                            <div class="guide-tile">
+                                <div class="tile-icon">🤌</div>
+                                <div class="tile-title">PINCH (CIMBIZ)</div>
+                                <div class="tile-desc">Yankı Yoğunluğu (CC91)</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -286,10 +333,10 @@
                             <div class="knob-unit full-width">
                                 <span class="knob-tag">ATMOSFER SEÇİMİ</span>
                                 <select id="env-theme-select" class="vst-select-lg">
-                                    <option value="cyberpunk" selected>🌌 Cyberpunk Stage (Neon)</option>
-                                    <option value="symphony">🎻 Symphony Hall (Amber)</option>
-                                    <option value="cosmos">🪐 Deep Cosmos (Uzay)</option>
-                                    <option value="plasma">⚡ Plasma Arc (Plazma)</option>
+                                    <option value="warp" selected>🌌 Quantum 3D Warp</option>
+                                    <option value="polygons">🔮 Crystalline Polygons</option>
+                                    <option value="aurora">⚡ Neon Laser Aurora</option>
+                                    <option value="burst">💥 Particle Fireworks</option>
                                 </select>
                             </div>
                         </div>
@@ -385,7 +432,7 @@
 
             <!-- VST RACK FOOTER -->
             <footer class="vst-footer">
-                <span>AuraSynth Pro VST3 Immersive</span>
+                <span>AuraSynth Pro VST3 Ultimate Edition</span>
                 <span id="midi-status-bar">Visual Master Rack Ready</span>
             </footer>
         </div>
@@ -394,7 +441,7 @@
         <div class="wood-cheek wood-right"></div>
     </div>
 
-    <!-- Hidden preset selector element for backwards JS binding -->
+    <!-- Hidden preset selector element -->
     <select id="preset-select" style="display:none;">
         <option value="violin">violin</option>
         <option value="cs80">cs80</option>
