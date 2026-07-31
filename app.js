@@ -735,7 +735,7 @@ function triggerChordTransition(fingerCount) {
         if (idx < activeVoices.length) {
             const voice = activeVoices[idx];
             voice.oscillators.forEach((osc, i) => {
-                const detuneMult = i === 1 ? 1.0023 : 1.0;
+                const detuneMult = i === 1 ? chorusDetuneMultiplier : 1.0;
                 osc.frequency.setTargetAtTime(freq * detuneMult, now, portamentoTime);
             });
             voice.gain.gain.cancelScheduledValues(now);
@@ -756,7 +756,7 @@ function triggerChordTransition(fingerCount) {
 
             const osc2 = audioCtx.createOscillator();
             osc2.setPeriodicWave(customWave);
-            osc2.frequency.setValueAtTime(freq * 1.0023, now);
+            osc2.frequency.setValueAtTime(freq * chorusDetuneMultiplier, now);
 
             osc1.connect(voiceGain);
             osc2.connect(voiceGain);
@@ -797,6 +797,8 @@ function updateChordUI(fingerCount, chordData) {
             box.classList.remove("active");
         }
     });
+
+    highlightActivePianoKeys(chordData.midiNotes);
 }
 
 // METRONOME
@@ -957,6 +959,227 @@ function toggleWavRecording() {
             wavBtn.textContent = "🎙️ WAV KAYDET";
             wavBtn.style.background = "linear-gradient(180deg, #7928ca, #4a1380)";
         }
+    }
+}
+
+// ============================================================================
+// VIRTUAL PIANO KEYBOARD ENGINE & MIDI EXPORTER
+// ============================================================================
+function initVirtualPianoKeyboard() {
+    const container = document.getElementById("piano-keyboard-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const qwertyInverseMap = {};
+    Object.entries(QWERTY_NOTE_MAP).forEach(([key, midi]) => {
+        qwertyInverseMap[midi] = key.toUpperCase();
+    });
+
+    let whiteKeyIndex = 0;
+    const totalWhiteKeys = 15;
+    const whiteKeyWidthPct = 100.0 / totalWhiteKeys;
+
+    const whiteKeyEls = [];
+    const blackKeyEls = [];
+
+    for (let midi = PIANO_START_MIDI; midi <= PIANO_END_MIDI; midi++) {
+        const pitchClass = midi % 12;
+        const noteName = midiToNoteName(midi);
+        const isBlack = [1, 3, 6, 8, 10].includes(pitchClass);
+
+        if (!isBlack) {
+            const keyEl = document.createElement("div");
+            keyEl.className = "piano-key white-key";
+            keyEl.setAttribute("data-midi", midi);
+            
+            const labelEl = document.createElement("span");
+            labelEl.className = "key-label";
+            labelEl.textContent = noteName;
+            keyEl.appendChild(labelEl);
+
+            if (qwertyInverseMap[midi]) {
+                const qEl = document.createElement("span");
+                qEl.className = "qwerty-label";
+                qEl.textContent = `[${qwertyInverseMap[midi]}]`;
+                keyEl.appendChild(qEl);
+            }
+
+            const currentWhiteIdx = whiteKeyIndex;
+            whiteKeyIndex++;
+
+            keyEl.addEventListener("mousedown", () => playSinglePianoNote(midi));
+            whiteKeyEls.push({ el: keyEl, idx: currentWhiteIdx });
+        } else {
+            const prevWhiteIdx = whiteKeyIndex - 1;
+            const leftPosPct = (prevWhiteIdx + 0.68) * whiteKeyWidthPct;
+
+            const keyEl = document.createElement("div");
+            keyEl.className = "piano-key black-key";
+            keyEl.setAttribute("data-midi", midi);
+            keyEl.style.left = `${leftPosPct}%`;
+
+            if (qwertyInverseMap[midi]) {
+                const qEl = document.createElement("span");
+                qEl.className = "qwerty-label";
+                qEl.textContent = qwertyInverseMap[midi];
+                keyEl.appendChild(qEl);
+            }
+
+            keyEl.addEventListener("mousedown", () => playSinglePianoNote(midi));
+            blackKeyEls.push(keyEl);
+        }
+    }
+
+    whiteKeyEls.forEach(item => container.appendChild(item.el));
+    blackKeyEls.forEach(el => container.appendChild(el));
+}
+
+function highlightActivePianoKeys(midiNotes) {
+    document.querySelectorAll(".piano-key").forEach(keyEl => {
+        const midi = parseInt(keyEl.getAttribute("data-midi"));
+        if (midiNotes && midiNotes.includes(midi)) {
+            keyEl.classList.add("active-key");
+        } else {
+            keyEl.classList.remove("active-key");
+        }
+    });
+}
+
+function playSinglePianoNote(midiNote) {
+    if (!audioCtx || !isAudioRunning) return;
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    const freq = midiToFreq(midiNote);
+    const now = audioCtx.currentTime;
+    const duration = 0.6;
+
+    const customWave = getOrCreateWavetable(currentPreset);
+
+    const voiceGain = audioCtx.createGain();
+    voiceGain.gain.setValueAtTime(0.0001, now);
+    voiceGain.gain.linearRampToValueAtTime(0.22, now + adsrParams.attack);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    const osc1 = audioCtx.createOscillator();
+    osc1.setPeriodicWave(customWave);
+    osc1.frequency.setValueAtTime(freq, now);
+
+    const osc2 = audioCtx.createOscillator();
+    osc2.setPeriodicWave(customWave);
+    osc2.frequency.setValueAtTime(freq * chorusDetuneMultiplier, now);
+
+    osc1.connect(voiceGain);
+    osc2.connect(voiceGain);
+    voiceGain.connect(filterNode);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.05);
+    osc2.stop(now + duration + 0.05);
+
+    highlightActivePianoKeys([midiNote]);
+    setTimeout(() => highlightActivePianoKeys([]), 350);
+
+    bgShockwaves.push({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        radius: 10,
+        maxRadius: Math.max(window.innerWidth, window.innerHeight) * 0.5,
+        alpha: 0.8
+    });
+}
+
+function exportPerformanceMidiFile() {
+    let eventsToExport = loopEvents;
+
+    if (!eventsToExport || eventsToExport.length === 0) {
+        eventsToExport = [
+            { timeOffset: 0.0, fingerCount: 1 },
+            { timeOffset: 0.8, fingerCount: 2 },
+            { timeOffset: 1.6, fingerCount: 3 },
+            { timeOffset: 2.4, fingerCount: 4 },
+            { timeOffset: 3.2, fingerCount: 5 },
+            { timeOffset: 4.0, fingerCount: 0 }
+        ];
+    }
+
+    const ticksPerBeat = 480;
+    const bpm = arpBpm || 120;
+    const secondsPerTick = 60.0 / (bpm * ticksPerBeat);
+
+    const trackBytes = [];
+
+    const mpqn = Math.round(60000000 / bpm);
+    trackBytes.push(0x00, 0xFF, 0x51, 0x03, (mpqn >> 16) & 0xFF, (mpqn >> 8) & 0xFF, mpqn & 0xFF);
+
+    let lastTick = 0;
+    let activeMidiNotes = [];
+
+    eventsToExport.forEach(evt => {
+        const targetTick = Math.round(evt.timeOffset / secondsPerTick);
+        let delta = Math.max(0, targetTick - lastTick);
+        lastTick = targetTick;
+
+        activeMidiNotes.forEach(note => {
+            writeVarLenBytes(trackBytes, delta);
+            delta = 0;
+            trackBytes.push(0x80, note, 0x00);
+        });
+        activeMidiNotes = [];
+
+        const chord = getTransposedChord(evt.fingerCount);
+        if (chord.midiNotes && chord.midiNotes.length > 0) {
+            chord.midiNotes.forEach(note => {
+                writeVarLenBytes(trackBytes, delta);
+                delta = 0;
+                trackBytes.push(0x90, note, 0x64);
+                activeMidiNotes.push(note);
+            });
+        }
+    });
+
+    writeVarLenBytes(trackBytes, 480);
+    trackBytes.push(0x00, 0xFF, 0x2F, 0x00);
+
+    const header = [
+        0x4D, 0x54, 0x68, 0x64,
+        0x00, 0x00, 0x00, 0x06,
+        0x00, 0x00,
+        0x00, 0x01,
+        (ticksPerBeat >> 8) & 0xFF, ticksPerBeat & 0xFF
+    ];
+
+    const trackHeader = [
+        0x4D, 0x54, 0x72, 0x6B,
+        (trackBytes.length >> 24) & 0xFF,
+        (trackBytes.length >> 16) & 0xFF,
+        (trackBytes.length >> 8) & 0xFF,
+        trackBytes.length & 0xFF
+    ];
+
+    const fullMidi = new Uint8Array([...header, ...trackHeader, ...trackBytes]);
+    const blob = new Blob([fullMidi], { type: "audio/midi" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `AuraSynth_Loop_${currentKey}_${currentPreset}_${Date.now()}.mid`;
+    a.click();
+    console.log("[MIDI EXPORT] MIDI File Downloaded Successfully.");
+}
+
+function writeVarLenBytes(arr, val) {
+    let buffer = val & 0x7F;
+    while (val >>= 7) {
+        buffer <<= 8;
+        buffer |= ((val & 0x7F) | 0x80);
+    }
+    while (true) {
+        arr.push(buffer & 0xFF);
+        if (buffer & 0x80) buffer >>= 8;
+        else break;
     }
 }
 
@@ -1458,20 +1681,28 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 8. EVENT LISTENERS & SHORTCUTS (H: Hide UI, M: Theme, C: Chaos, S: Sustain)
+// 8. EVENT LISTENERS & SHORTCUTS (H: Hide UI, M: Theme, C: Chaos, S: Sustain, QWERTY)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
+    initVirtualPianoKeyboard();
 
     window.addEventListener("keydown", (e) => {
-        if (e.key === "h" || e.key === "H") {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+
+        const key = e.key.toLowerCase();
+        if (key === "h") {
             toggleImmersionMode();
-        } else if (e.key === "m" || e.key === "M") {
+        } else if (key === "m") {
             cycleNextEnvironment();
-        } else if (e.key === "c" || e.key === "C") {
+        } else if (key === "c") {
             toggleChaosArtMode();
-        } else if (e.key === "s" || e.key === "S") {
+        } else if (key === "s") {
             toggleSustainPedal();
+        } else if (QWERTY_CHORD_MAP.hasOwnProperty(key)) {
+            triggerChordTransition(QWERTY_CHORD_MAP[key]);
+        } else if (QWERTY_NOTE_MAP.hasOwnProperty(key)) {
+            playSinglePianoNote(QWERTY_NOTE_MAP[key]);
         }
     });
 
@@ -1520,6 +1751,36 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("slider-adsr-release").addEventListener("input", (e) => {
             adsrParams.release = parseFloat(e.target.value);
             if (document.getElementById("val-adsr-release")) document.getElementById("val-adsr-release").textContent = `${Math.round(adsrParams.release * 1000)} ms`;
+        });
+    }
+
+    // SPATIAL FX SLIDERS LISTENERS
+    if (document.getElementById("slider-delay-time")) {
+        document.getElementById("slider-delay-time").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-delay-time")) document.getElementById("val-delay-time").textContent = `${Math.round(val * 1000)} ms`;
+            if (delayNode && audioCtx) delayNode.delayTime.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+        });
+    }
+    if (document.getElementById("slider-delay-feedback")) {
+        document.getElementById("slider-delay-feedback").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-delay-feedback")) document.getElementById("val-delay-feedback").textContent = `${Math.round(val * 100)} %`;
+            if (delayFeedback && audioCtx) delayFeedback.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+        });
+    }
+    if (document.getElementById("slider-chorus-detune")) {
+        document.getElementById("slider-chorus-detune").addEventListener("input", (e) => {
+            chorusDetuneMultiplier = parseFloat(e.target.value);
+            const cents = Math.round((chorusDetuneMultiplier - 1.0) * 1000 * 10) / 10;
+            if (document.getElementById("val-chorus-detune")) document.getElementById("val-chorus-detune").textContent = `${cents} Cents`;
+        });
+    }
+    if (document.getElementById("slider-reverb-wet")) {
+        document.getElementById("slider-reverb-wet").addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            if (document.getElementById("val-reverb-wet")) document.getElementById("val-reverb-wet").textContent = `${Math.round(val * 100)} %`;
+            if (delayGain && audioCtx) delayGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
         });
     }
 
@@ -1648,6 +1909,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("btn-loop-play")) document.getElementById("btn-loop-play").addEventListener("click", () => startLoopPlayback());
     if (document.getElementById("btn-loop-clear")) document.getElementById("btn-loop-clear").addEventListener("click", () => clearLoop());
     if (document.getElementById("btn-rec-wav")) document.getElementById("btn-rec-wav").addEventListener("click", () => toggleWavRecording());
+    if (document.getElementById("btn-export-midi")) document.getElementById("btn-export-midi").addEventListener("click", () => exportPerformanceMidiFile());
 
     if (document.getElementById("scale-mode-select")) {
         document.getElementById("scale-mode-select").addEventListener("change", (e) => {
@@ -1723,7 +1985,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("slider-volume")) {
         document.getElementById("slider-volume").addEventListener("input", (e) => {
             const val = parseFloat(e.target.value);
-            if (document.getElementById("val-volume").textContent) document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
+            if (document.getElementById("val-volume")) document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
             if (masterGain) {
                 masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
             }
