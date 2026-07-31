@@ -1,13 +1,13 @@
 /* ==========================================================================
-   AURASYNTH PRO VST3 ULTIMATE - MODULAR TABBED HARDWARE RACK STYLING
+   AURASYNTH PRO VST3 ULTIMATE - IMMERSION CINEMA MODE STYLING
    ========================================================================== */
 
 :root {
-    --vst-bg: #0b0d13;
-    --rack-bg: #141620;
-    --panel-bg: #1a1e2b;
+    --vst-bg: #090a0f;
+    --rack-bg: #12141d;
+    --panel-bg: #181b26;
     --panel-border: rgba(255, 255, 255, 0.08);
-    --panel-border-glow: rgba(0, 195, 255, 0.3);
+    --panel-border-glow: rgba(0, 195, 255, 0.35);
     
     --led-red: #ff3b30;
     --led-green: #34c759;
@@ -15,7 +15,7 @@
     --led-gold: #ffcc00;
     --led-purple: #af52de;
     
-    --text-primary: #f3f4f6;
+    --text-primary: #f9fafb;
     --text-secondary: #9ca3af;
     --text-muted: #6b7280;
     
@@ -55,6 +55,64 @@ html, body {
     pointer-events: none;
 }
 
+/* IMMERSION MODE FLOATING HUD */
+.immersion-hud {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    pointer-events: auto;
+    transition: opacity 0.4s ease;
+}
+
+.immersion-hud.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.immersion-pill-btn {
+    background: rgba(18, 20, 29, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 195, 255, 0.4);
+    color: var(--led-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 195, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.immersion-pill-btn.gold {
+    border-color: rgba(255, 204, 0, 0.4);
+    color: var(--led-gold);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 204, 0, 0.3);
+}
+
+.immersion-pill-btn:hover {
+    transform: scale(1.05);
+}
+
+.immersion-chord-badge {
+    background: rgba(18, 20, 29, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 10px 22px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* MAIN VST CONTAINER */
 .vst-rack-container {
     width: 98vw;
     max-width: 1440px;
@@ -68,6 +126,13 @@ html, body {
     position: relative;
     z-index: 10;
     overflow: hidden;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.vst-rack-container.hidden-ui {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
 }
 
 .wood-cheek {
@@ -90,7 +155,7 @@ html, body {
     grid-template-rows: auto auto 1fr auto auto;
     gap: 8px;
     overflow: hidden;
-    background: linear-gradient(180deg, rgba(20, 22, 32, 0.96), rgba(13, 15, 22, 0.98));
+    background: linear-gradient(180deg, rgba(18, 20, 29, 0.96), rgba(12, 14, 20, 0.98));
 }
 
 /* HEADER */
@@ -107,13 +172,48 @@ html, body {
 .brand-block { display: flex; align-items: center; gap: 10px; }
 .vst-power-led { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 2px solid #555; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); transition: all 0.3s ease; }
 .vst-power-led.active { background: var(--led-cyan); border-color: #fff; box-shadow: 0 0 10px var(--led-cyan); }
-.brand-text { display: flex; flex-direction: column; }
 .vst-brand { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; letter-spacing: 1.2px; color: #fff; }
-.vst-version { font-size: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); }
+.badge-pro { font-size: 0.6rem; background: rgba(0, 195, 255, 0.15); color: var(--led-cyan); border: 1px solid rgba(0, 195, 255, 0.3); padding: 2px 6px; border-radius: 3px; font-weight: 700; }
 
-.header-actions { display: flex; align-items: center; gap: 10px; }
+/* INSTANT PRESET PILL BAR */
+.preset-pill-bar { display: flex; gap: 6px; }
+.preset-pill {
+    background: #11131c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.preset-pill:hover { border-color: rgba(255, 255, 255, 0.3); color: #fff; }
+.preset-pill.active {
+    background: rgba(0, 195, 255, 0.18);
+    border-color: var(--led-cyan);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
+}
+
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.vst-immersion-btn {
+    background: linear-gradient(180deg, #3a2254, #241338);
+    border: 1px solid rgba(175, 82, 222, 0.4);
+    color: #fff;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.vst-immersion-btn:hover { border-color: var(--led-purple); box-shadow: 0 0 10px var(--led-purple); }
+
 .vst-power-btn { background: linear-gradient(180deg, #2b3245, #1d2230); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 7px 14px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-.vst-help-btn { background: #171a24; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary); padding: 7px 12px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.75rem; cursor: pointer; }
+.vst-icon-btn { background: #171a24; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary); padding: 7px 10px; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer; }
 
 /* MODULAR TAB BAR */
 .rack-tab-bar {
@@ -137,7 +237,6 @@ html, body {
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
-    white-space: nowrap;
     text-align: center;
 }
 
@@ -150,16 +249,8 @@ html, body {
 }
 
 /* TAB PANELS */
-.tab-panel {
-    display: none;
-    height: 100%;
-    overflow: hidden;
-}
-
-.tab-panel.active {
-    display: flex;
-    flex-direction: column;
-}
+.tab-panel { display: none; height: 100%; overflow: hidden; }
+.tab-panel.active { display: flex; flex-direction: column; }
 
 .panel-row {
     display: grid;
@@ -182,14 +273,15 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-secondary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: 6px;
     margin-bottom: 8px;
 }
+
+.card-title { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); }
+.status-badge { font-size: 0.6rem; font-family: var(--font-mono); padding: 2px 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+.status-badge.active { background: rgba(0, 195, 255, 0.15); color: var(--led-cyan); border: 1px solid rgba(0, 195, 255, 0.3); }
+.status-badge.gold { color: var(--led-gold); }
 
 /* CHORD MATRIX */
 .chord-matrix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0; }
@@ -198,15 +290,14 @@ html, body {
 .box-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .led-indicator { width: 7px; height: 7px; border-radius: 50%; background: #333; }
 .chord-box.active .led-indicator { background: var(--led-cyan); box-shadow: 0 0 6px var(--led-cyan); }
-.finger-label { font-size: 0.6rem; font-family: var(--font-mono); color: var(--text-muted); }
-.chord-main-name { font-size: 0.88rem; font-weight: 700; color: #fff; white-space: nowrap; }
-.chord-freqs { font-size: 0.65rem; font-family: var(--font-mono); color: var(--led-gold); white-space: nowrap; }
+.finger-label { font-size: 0.58rem; font-family: var(--font-mono); color: var(--text-muted); }
+.chord-main-name { font-size: 0.88rem; font-weight: 800; color: #fff; white-space: nowrap; }
 
 /* KNOBS & SELECTORS */
 .knob-grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .knob-unit { display: flex; flex-direction: column; gap: 4px; }
 .knob-unit.full-width { grid-column: span 2; }
-.knob-unit label { font-size: 0.62rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-muted); }
+.knob-tag { font-size: 0.6rem; font-family: var(--font-mono); font-weight: 700; color: var(--text-muted); }
 
 .vst-select-lg {
     background: #11131c;
@@ -229,7 +320,6 @@ html, body {
 .sliders-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%; align-items: center; }
 
 .slider-box { display: flex; flex-direction: column; gap: 6px; background: #11131c; padding: 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.05); }
-.slider-box label { font-size: 0.64rem; font-family: var(--font-mono); color: var(--text-muted); }
 .vst-range-lg { accent-color: var(--led-cyan); cursor: pointer; width: 100%; height: 6px; }
 .val-readout-lg { font-size: 0.78rem; font-family: var(--font-mono); font-weight: 700; color: var(--led-cyan); text-align: right; }
 
@@ -246,7 +336,6 @@ html, body {
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
-    white-space: nowrap;
     text-align: center;
 }
 
@@ -271,7 +360,7 @@ html, body {
 }
 .vst-btn-lg:hover { border-color: var(--led-cyan); background: #22283b; }
 
-/* LOWER DECK: TELEMETRY BAR & MONITOR GRID */
+/* LOWER DECK */
 .vst-lower-deck { display: flex; flex-direction: column; gap: 8px; }
 
 .telemetry-bar {
@@ -302,8 +391,10 @@ html, body {
 .deck-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap: 4px; height: 100%; overflow: hidden; }
 .panel-bar { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; color: var(--text-muted); }
 
-.camera-fps-badge { color: var(--led-green); }
-.right-hand-tag { color: var(--led-purple); font-size: 0.6rem; }
+.panel-tag { color: var(--text-secondary); }
+.fps-pill { color: var(--led-green); }
+.status-pill.purple { color: var(--led-purple); }
+
 .vst-video-box { position: relative; width: 100%; height: 100%; background: #000; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
 #input-video { display: none; }
 #output-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -318,5 +409,4 @@ html, body {
 .ro-val { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: #fff; }
 .ro-gold { color: var(--led-gold); }
 
-/* FOOTER */
 .vst-footer { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 4px; }

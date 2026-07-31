@@ -1,12 +1,6 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - HARDWARE OPTIMIZED 60 FPS ENGINE (v7.1)
- * ============================================================================
- * Performance Fixes:
- *  1. Non-blocking MediaPipe Camera Frame Guard (isProcessingFrame)
- *  2. Removed CPU-intensive Canvas shadowBlur in particle renderer
- *  3. Optimized background particle loop (60 lightweight particles)
- *  4. Dedicated Window Resize Listener (Zero Reflow in Animation Loop)
+ * AURASYNTH PRO VST3 ENGINE - IMMERSION VISUAL EDITION (v7.3)
  * ============================================================================
  */
 
@@ -32,15 +26,21 @@ let analyserNode = null;
 let isSpectralFrozen = false;
 
 // Scope Mode State
-let scopeMode = "wave"; // "wave", "spectrum", "lissajous"
+let scopeMode = "wave";
 
-// Environment Visual Engine State (Optimized)
+// Environment Visual Engine State (Lightweight 60 FPS)
 let envTheme = "cyberpunk";
+const ENV_THEMES_LIST = ["cyberpunk", "symphony", "cosmos", "plasma"];
+let envThemeIndex = 0;
+
 let bgParticles = [];
 let bgShockwaves = [];
-const NUM_BG_PARTICLES = 60; // Lightweight 60 FPS particle count
+const NUM_BG_PARTICLES = 60;
 
-// Camera Processing Frame Guard
+// Immersion Cinema Mode State
+let isImmersionMode = false;
+
+// Non-blocking Camera Frame Guard
 let isProcessingFrame = false;
 
 // Metronome Engine State
@@ -187,7 +187,8 @@ function populateMidiOutputs() {
     });
 
     if (outputs.length > 0) {
-        document.getElementById("midi-status-bar").textContent = `MIDI: ${outputs.length} Cihaz Bağlı (DAW Out Ready)`;
+        const bar = document.getElementById("midi-status-bar");
+        if (bar) bar.textContent = `MIDI: ${outputs.length} Cihaz Bağlı (DAW Out Ready)`;
     }
 }
 
@@ -208,7 +209,44 @@ function sendMidiChordNotes(midiMidiNotes) {
 }
 
 // ============================================================================
-// 2. AUDIO ENGINE & DYNAMICS COMPRESSOR INIT
+// 2. IMMERSION CINEMA MODE & ATMOSPHERE SWITCHER
+// ============================================================================
+function toggleImmersionMode() {
+    isImmersionMode = !isImmersionMode;
+    const rackContainer = document.getElementById("vst-rack-container");
+    const immersionHud = document.getElementById("immersion-hud");
+
+    if (isImmersionMode) {
+        if (rackContainer) rackContainer.classList.add("hidden-ui");
+        if (immersionHud) immersionHud.classList.remove("hidden");
+    } else {
+        if (rackContainer) rackContainer.classList.remove("hidden-ui");
+        if (immersionHud) immersionHud.classList.add("hidden");
+    }
+}
+
+function cycleNextEnvironment() {
+    envThemeIndex = (envThemeIndex + 1) % ENV_THEMES_LIST.length;
+    envTheme = ENV_THEMES_LIST[envThemeIndex];
+
+    const envSelect = document.getElementById("env-theme-select");
+    if (envSelect) envSelect.value = envTheme;
+
+    const themeNames = {
+        cyberpunk: "🌌 Cyberpunk Neon",
+        symphony: "🎻 Symphony Amber",
+        cosmos: "🪐 Deep Cosmos",
+        plasma: "⚡ Plasma Arc"
+    };
+
+    const nextBtn = document.getElementById("btn-next-env-gesture");
+    if (nextBtn) nextBtn.textContent = `🌌 MEKAN: ${themeNames[envTheme]}`;
+
+    console.log(`[ENVIRONMENT SWITCH] Switched to: ${envTheme}`);
+}
+
+// ============================================================================
+// 3. AUDIO ENGINE & DYNAMICS COMPRESSOR INIT
 // ============================================================================
 function getOrCreateWavetable(presetKey) {
     if (periodicWavesCache[presetKey]) return periodicWavesCache[presetKey];
@@ -314,13 +352,15 @@ function initAudioEngine() {
 
     document.getElementById("vst-power-led").classList.add("active");
     const powerBtn = document.getElementById("btn-start-audio");
-    powerBtn.style.opacity = "0.85";
-    powerBtn.innerHTML = "🟢 AUDIO MOTORU AKTİF";
+    if (powerBtn) {
+        powerBtn.style.opacity = "0.85";
+        powerBtn.innerHTML = "🟢 AKTİF (ONLINE)";
+    }
 
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Audio Engine Optimized.");
+    console.log("[AuraSynth PRO] Immersive Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -368,12 +408,12 @@ function toggleSpectralFreeze() {
     if (isSpectralFrozen) {
         if (btn) {
             btn.classList.add("frozen");
-            btn.textContent = "❄️ FROZEN DRONE (ACTIVE)";
+            btn.textContent = "❄️ FROZEN (ACTIVE)";
         }
     } else {
         if (btn) {
             btn.classList.remove("frozen");
-            btn.textContent = "❄️ FREEZE DRONE";
+            btn.textContent = "❄️ FREEZE";
         }
     }
 }
@@ -416,7 +456,14 @@ function loadPresetFromStorage() {
         arpMode = data.arpMode || "off";
         envTheme = data.envTheme || "cyberpunk";
 
-        if (document.getElementById("preset-select")) document.getElementById("preset-select").value = currentPreset;
+        document.querySelectorAll(".preset-pill").forEach(pill => {
+            if (pill.getAttribute("data-preset") === currentPreset) {
+                pill.classList.add("active");
+            } else {
+                pill.classList.remove("active");
+            }
+        });
+
         if (document.getElementById("key-select")) document.getElementById("key-select").value = currentKey;
         if (document.getElementById("scale-mode-select")) document.getElementById("scale-mode-select").value = currentScaleMode;
         if (document.getElementById("octave-select")) document.getElementById("octave-select").value = currentOctaveShift;
@@ -442,7 +489,7 @@ function loadPresetFromStorage() {
 }
 
 // ============================================================================
-// 3. SYNTHESIS & GESTURE LOOPER ENGINE
+// 4. SYNTHESIS & GESTURE LOOPER ENGINE
 // ============================================================================
 function triggerChordTransition(fingerCount) {
     if (!audioCtx || !isAudioRunning) return;
@@ -533,8 +580,9 @@ function updateChordUI(fingerCount, chordData) {
     if (nameEl) nameEl.textContent = chordData.name;
     const listEl = document.getElementById("ro-notes-list");
     if (listEl) listEl.textContent = chordData.notes.length > 0 ? chordData.notes.join(" - ") : "---";
-    const badgeEl = document.getElementById("hud-active-chord");
-    if (badgeEl) badgeEl.textContent = chordData.name;
+
+    const immersionBadge = document.getElementById("immersion-chord-name");
+    if (immersionBadge) immersionBadge.textContent = chordData.name;
 
     document.querySelectorAll(".chord-box").forEach(box => {
         const fingers = parseInt(box.getAttribute("data-fingers"));
@@ -556,13 +604,13 @@ function toggleMetronome() {
     if (isMetronomeActive) {
         if (metroBtn) {
             metroBtn.classList.add("active");
-            metroBtn.textContent = "🔔 METRONOM (ON)";
+            metroBtn.textContent = "🔔 ON";
         }
         startMetronomeLoop();
     } else {
         if (metroBtn) {
             metroBtn.classList.remove("active");
-            metroBtn.textContent = "🔔 METRONOM (OFF)";
+            metroBtn.textContent = "🔔 OFF";
         }
         if (metronomeTimerId) clearInterval(metronomeTimerId);
     }
@@ -607,15 +655,15 @@ function toggleLoopRecording() {
         loopStartTime = audioCtx.currentTime;
         if (recBtn) {
             recBtn.classList.add("recording");
-            recBtn.textContent = "⏺ REC (KAYDEDİLİYOR...)";
+            recBtn.textContent = "⏺ KAYIT...";
         }
-        if (statusText) statusText.textContent = "LOOP: KAYIT YAPILIYOR";
+        if (statusText) statusText.textContent = "REC";
     } else {
         isLoopRecording = false;
         loopDuration = Math.max(0.5, audioCtx.currentTime - loopStartTime);
         if (recBtn) {
             recBtn.classList.remove("recording");
-            recBtn.textContent = "⏺ REC LOOP";
+            recBtn.textContent = "⏺ KAYIT";
         }
         startLoopPlayback();
     }
@@ -629,7 +677,7 @@ function startLoopPlayback() {
     const statusText = document.getElementById("looper-status-text");
 
     if (playBtn) playBtn.classList.add("playing");
-    if (statusText) statusText.textContent = `LOOP: ÇALIYOR (${loopDuration.toFixed(1)}s)`;
+    if (statusText) statusText.textContent = `PLAY (${loopDuration.toFixed(1)}s)`;
 
     if (loopTimerId) clearInterval(loopTimerId);
 
@@ -660,9 +708,9 @@ function clearLoop() {
     const playBtn = document.getElementById("btn-loop-play");
     const statusText = document.getElementById("looper-status-text");
 
-    if (recBtn) { recBtn.classList.remove("recording"); recBtn.textContent = "⏺ REC LOOP"; }
+    if (recBtn) { recBtn.classList.remove("recording"); recBtn.textContent = "⏺ KAYIT"; }
     if (playBtn) playBtn.classList.remove("playing");
-    if (statusText) statusText.textContent = "LOOP: TEMİZLENDİ";
+    if (statusText) statusText.textContent = "IDLE";
 }
 
 // LIVE WAV AUDIO RECORDING & EXPORT
@@ -694,7 +742,7 @@ function toggleWavRecording() {
         mediaRecorder.start();
         isWavRecording = true;
         if (wavBtn) {
-            wavBtn.textContent = "⏹️ KAYDI BİTİR VE İNDİR";
+            wavBtn.textContent = "⏹️ BİTİR VE İNDİR";
             wavBtn.style.background = "var(--led-red)";
         }
     } else {
@@ -767,7 +815,7 @@ function playArpPluck(freq, time, duration) {
 }
 
 // ============================================================================
-// 4. RIGHT HAND EXPRESSION & 3D DEPTH MODULATION
+// 5. RIGHT HAND EXPRESSION & GESTURE ENVIRONMENT SWITCHER
 // ============================================================================
 function processRightHandExpression(landmarks) {
     if (!audioCtx || !isAudioRunning) return;
@@ -778,6 +826,12 @@ function processRightHandExpression(landmarks) {
 
     const indexTip = landmarks[8];
     const thumbTip = landmarks[4];
+
+    // High gesture detection for Atmosphere switching (Right hand index held high near Y < 0.15)
+    if (indexTip.y < 0.12 && nowTime - (rightMetrics.lastEnvSwitchTime || 0) > 2000) {
+        rightMetrics.lastEnvSwitchTime = nowTime;
+        cycleNextEnvironment();
+    }
 
     const normY = Math.max(0, Math.min(1, 1.0 - indexTip.y));
     const targetCutoff = 150 + Math.pow(normY, 2.2) * 11850;
@@ -825,7 +879,7 @@ function processRightHandExpression(landmarks) {
     if (document.getElementById("gauge-cutoff")) document.getElementById("gauge-cutoff").textContent = `${rightMetrics.cutoffHz} Hz`;
     if (document.getElementById("bar-cutoff")) document.getElementById("bar-cutoff").style.width = `${Math.min(100, (rightMetrics.cutoffHz / 12000) * 100)}%`;
 
-    if (document.getElementById("gauge-depth")) document.getElementById("gauge-depth").textContent = zDepthNorm < 0.4 ? "NEAR (3D)" : zDepthNorm > 0.7 ? "FAR (3D)" : "MID (3D)";
+    if (document.getElementById("gauge-depth")) document.getElementById("gauge-depth").textContent = zDepthNorm < 0.4 ? "NEAR" : zDepthNorm > 0.7 ? "FAR" : "MID";
     if (document.getElementById("bar-depth")) document.getElementById("bar-depth").style.width = `${Math.round(zDepthNorm * 100)}%`;
 
     if (document.getElementById("gauge-vibrato")) document.getElementById("gauge-vibrato").textContent = `${rightMetrics.vibratoDepth} %`;
@@ -838,7 +892,7 @@ function processRightHandExpression(landmarks) {
 }
 
 // ============================================================================
-// 5. AUDIO-REACTIVE BACKGROUND ENGINE (LIGHTWEIGHT 60 FPS - ZERO SHADOWBLUR)
+// 6. AUDIO-REACTIVE BACKGROUND ENGINE
 // ============================================================================
 function initBackgroundEnvironmentEngine() {
     const bgCanvas = document.getElementById("reactive-bg-canvas");
@@ -882,7 +936,6 @@ function initBackgroundEnvironmentEngine() {
         ctx.fillStyle = "rgba(11, 13, 19, 0.25)";
         ctx.fillRect(0, 0, w, h);
 
-        // Draw Shockwaves
         for (let s = bgShockwaves.length - 1; s >= 0; s--) {
             const shock = bgShockwaves[s];
             ctx.beginPath();
@@ -901,7 +954,6 @@ function initBackgroundEnvironmentEngine() {
             }
         }
 
-        // Draw Lightweight Particles (NO shadowBlur for max CPU/GPU performance)
         bgParticles.forEach(p => {
             p.x += p.vx * (1.0 + avgEnergy * 2.5);
             p.y += p.vy * (1.0 + avgEnergy * 2.5);
@@ -935,7 +987,7 @@ function initBackgroundEnvironmentEngine() {
 }
 
 // ============================================================================
-// 6. MEDIAPIPE TRACKING & MULTI-MODE VISUALIZER
+// 7. MEDIAPIPE TRACKING & VISUALIZER
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -1034,7 +1086,7 @@ function onResults(results) {
             rightBadge.textContent = "SAĞ EL: AKTİF";
             rightBadge.classList.add("active");
         } else {
-            rightBadge.textContent = "SAĞ EL: BEKLENİYOR";
+            rightBadge.textContent = "SAĞ EL: --";
             rightBadge.classList.remove("active");
         }
     }
@@ -1138,11 +1190,31 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 7. MODULAR TAB SWITCHING & CAMERA FRAME GUARD (60 FPS OPTIMIZED)
+// 8. EVENT LISTENERS & KEYBOARD SHORTCUTS (H: Hide UI, M: Change Theme)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
 
+    // Keyboard Shortcuts (H = Hide/Show UI, M = Cycle Atmosphere Theme)
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "h" || e.key === "H") {
+            toggleImmersionMode();
+        } else if (e.key === "m" || e.key === "M") {
+            cycleNextEnvironment();
+        }
+    });
+
+    if (document.getElementById("btn-toggle-immersion")) {
+        document.getElementById("btn-toggle-immersion").addEventListener("click", () => toggleImmersionMode());
+    }
+    if (document.getElementById("btn-exit-immersion")) {
+        document.getElementById("btn-exit-immersion").addEventListener("click", () => toggleImmersionMode());
+    }
+    if (document.getElementById("btn-next-env-gesture")) {
+        document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
+    }
+
+    // Tab Switching Logic
     document.querySelectorAll(".rack-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".rack-tab-btn").forEach(b => b.classList.remove("active"));
@@ -1152,6 +1224,24 @@ window.addEventListener("DOMContentLoaded", () => {
             const targetTab = btn.getAttribute("data-tab");
             const panel = document.getElementById(targetTab);
             if (panel) panel.classList.add("active");
+        });
+    });
+
+    // Preset Pill Logic
+    document.querySelectorAll(".preset-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+            document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+
+            currentPreset = pill.getAttribute("data-preset");
+            const sel = document.getElementById("preset-select");
+            if (sel) sel.value = currentPreset;
+
+            if (currentChordIndex >= 0) {
+                const idx = currentChordIndex;
+                currentChordIndex = -1;
+                triggerChordTransition(idx);
+            }
         });
     });
 
@@ -1170,7 +1260,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     hands.onResults(onResults);
 
-    // NON-BLOCKING CAMERA FRAME DISPATCH GUARD
     const camera = new Camera(videoElement, {
         onFrame: async () => {
             if (isProcessingFrame) return;
@@ -1203,7 +1292,7 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    ["click", "touchstart", "mousedown", "keydown"].forEach(evt => {
+    ["click", "touchstart", "mousedown"].forEach(evt => {
         window.addEventListener(evt, () => {
             initAudioEngine();
         }, { passive: true });
@@ -1230,7 +1319,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("env-theme-select").addEventListener("change", (e) => {
             envTheme = e.target.value;
             const bar = document.getElementById("midi-status-bar");
-            if (bar) bar.textContent = `Audio-Reactive World Active (${e.target.options[e.target.selectedIndex].text})`;
+            if (bar) bar.textContent = `Visual Master Rack Active (${e.target.options[e.target.selectedIndex].text})`;
         });
     }
 
@@ -1288,17 +1377,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 selectedMidiOutput = null;
             } else {
                 selectedMidiOutput = midiAccess.outputs.get(val);
-            }
-        });
-    }
-
-    if (document.getElementById("preset-select")) {
-        document.getElementById("preset-select").addEventListener("change", (e) => {
-            currentPreset = e.target.value;
-            if (currentChordIndex >= 0) {
-                const idx = currentChordIndex;
-                currentChordIndex = -1;
-                triggerChordTransition(idx);
             }
         });
     }
