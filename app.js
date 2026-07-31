@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - LISSAJOUS STEREO SCOPE & CYCLE 5 ENHANCEMENTS
+ * AURASYNTH PRO VST3 ENGINE - FLAGSHIP EDITION (SPECTRAL FREEZE & STORAGE)
  * ============================================================================
  */
 
@@ -21,6 +21,9 @@ let delayFeedback = null;
 let delayGain = null;
 let subOscGain = null;
 let analyserNode = null;
+
+// Spectral Freeze State
+let isSpectralFrozen = false;
 
 // Scope Mode State
 let scopeMode = "wave"; // "wave", "spectrum", "lissajous"
@@ -307,7 +310,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Audio Engine & Reactive World Engine Initialized.");
+    console.log("[AuraSynth PRO] Flagship Engine Ready.");
 }
 
 function midiToFreq(midi) {
@@ -348,6 +351,79 @@ function getTransposedChord(fingerCount) {
     return { name: fullName, notes: notes, freqs: freqs, midiNotes: midiNotes };
 }
 
+// SPECTRAL FREEZE ENGINE
+function toggleSpectralFreeze() {
+    isSpectralFrozen = !isSpectralFrozen;
+    const btn = document.getElementById("btn-freeze-toggle");
+    if (isSpectralFrozen) {
+        btn.classList.add("frozen");
+        btn.textContent = "❄️ FROZEN DRONE (ACTIVE)";
+    } else {
+        btn.classList.remove("frozen");
+        btn.textContent = "❄️ FREEZE DRONE";
+    }
+}
+
+// PRESET SAVE / LOAD ENGINE
+function savePresetToStorage() {
+    const presetData = {
+        preset: currentPreset,
+        key: currentKey,
+        scale: currentScaleMode,
+        octave: currentOctaveShift,
+        glide: portamentoTime,
+        bpm: arpBpm,
+        arpMode: arpMode,
+        envTheme: envTheme,
+        eqBass: document.getElementById("slider-eq-bass").value,
+        eqMid: document.getElementById("slider-eq-mid").value,
+        eqTreble: document.getElementById("slider-eq-treble").value
+    };
+    localStorage.setItem("aurasynth_preset", JSON.stringify(presetData));
+    
+    // Download as JSON file as well
+    const blob = new Blob([JSON.stringify(presetData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `AuraSynth_Patch_${currentPreset}_${Date.now()}.json`;
+    a.click();
+}
+
+function loadPresetFromStorage() {
+    const saved = localStorage.getItem("aurasynth_preset");
+    if (saved) {
+        const data = JSON.parse(saved);
+        currentPreset = data.preset || "violin";
+        currentKey = data.key || "C";
+        currentScaleMode = data.scale || "major";
+        currentOctaveShift = data.octave || 0;
+        portamentoTime = data.glide || 0.25;
+        arpBpm = data.bpm || 120;
+        arpMode = data.arpMode || "off";
+        envTheme = data.envTheme || "cyberpunk";
+
+        document.getElementById("preset-select").value = currentPreset;
+        document.getElementById("key-select").value = currentKey;
+        document.getElementById("scale-mode-select").value = currentScaleMode;
+        document.getElementById("octave-select").value = currentOctaveShift;
+        document.getElementById("slider-glide").value = portamentoTime;
+        document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
+        document.getElementById("slider-bpm").value = arpBpm;
+        document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
+        document.getElementById("arp-mode-select").value = arpMode;
+        document.getElementById("env-theme-select").value = envTheme;
+
+        if (data.eqBass) {
+            document.getElementById("slider-eq-bass").value = data.eqBass;
+            document.getElementById("val-eq-bass").textContent = `${data.eqBass > 0 ? '+' : ''}${data.eqBass} dB`;
+            if (eqBassNode && audioCtx) eqBassNode.gain.setValueAtTime(parseFloat(data.eqBass), audioCtx.currentTime);
+        }
+
+        console.log("[PRESET STORAGE] Preset Loaded Successfully.");
+    }
+}
+
 // ============================================================================
 // 3. SYNTHESIS & GESTURE LOOPER ENGINE
 // ============================================================================
@@ -358,6 +434,8 @@ function triggerChordTransition(fingerCount) {
         const timeOffset = audioCtx.currentTime - loopStartTime;
         loopEvents.push({ timeOffset: timeOffset, fingerCount: fingerCount });
     }
+
+    if (isSpectralFrozen) return; // Prevent changing chord while frozen
 
     if (currentChordIndex === fingerCount) return;
 
@@ -956,7 +1034,6 @@ function startVisualizer() {
         ctx.fillStyle = "#080a0e";
         ctx.fillRect(0, 0, w, h);
 
-        // Grid Lines
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
         ctx.lineWidth = 1;
         for (let x = 0; x < w; x += 35) {
@@ -967,7 +1044,6 @@ function startVisualizer() {
         }
 
         if (scopeMode === "spectrum") {
-            // FFT Spectrum Bars
             const barWidth = (w / bufferLength) * 2.5;
             let barX = 0;
             for (let i = 0; i < bufferLength; i++) {
@@ -977,7 +1053,6 @@ function startVisualizer() {
                 barX += barWidth + 1;
             }
         } else if (scopeMode === "lissajous") {
-            // Stereo Phase Lissajous Vector Circle Scope
             const centerX = w / 2;
             const centerY = h / 2;
             const radius = Math.min(w, h) * 0.38;
@@ -1001,7 +1076,6 @@ function startVisualizer() {
             ctx.closePath();
             ctx.stroke();
         } else {
-            // Standard Oscilloscope Waveform
             ctx.lineWidth = 2;
             ctx.strokeStyle = "#00c3ff";
             ctx.shadowBlur = 6;
@@ -1078,6 +1152,10 @@ window.addEventListener("DOMContentLoaded", () => {
         e.stopPropagation();
         initAudioEngine();
     });
+
+    document.getElementById("btn-freeze-toggle").addEventListener("click", () => toggleSpectralFreeze());
+    document.getElementById("btn-save-preset").addEventListener("click", () => savePresetToStorage());
+    document.getElementById("btn-load-preset").addEventListener("click", () => loadPresetFromStorage());
 
     document.getElementById("scope-mode-select").addEventListener("change", (e) => {
         scopeMode = e.target.value;
