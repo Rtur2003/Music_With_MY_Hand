@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Orchestra Engine (Tone.js)
-   Multi-section orchestral synthesizer for Conductor Mode
-   (Strings, Woodwinds, Brass, Percussion)
+   Multi-section orchestral synthesizer & continuous score playback
+   for Conductor Mode
    ═══════════════════════════════════════════════════════════════════ */
 
 import * as Tone from 'tone';
@@ -13,6 +13,9 @@ export class OrchestraEngine {
   private brassSynth!: Tone.PolySynth;
   private percussionSynth!: Tone.MembraneSynth;
 
+  // Theremin Synth
+  private thereminSynth!: Tone.Synth;
+
   private stringsGain!: Tone.Gain;
   private woodwindsGain!: Tone.Gain;
   private brassGain!: Tone.Gain;
@@ -21,11 +24,14 @@ export class OrchestraEngine {
   private reverb!: Tone.Reverb;
 
   private isStarted = false;
+  private isConducting = false;
   private currentPieceIndex = 0;
   private currentBeat = 0;
   private currentBpm = 120;
   private dynamics = 0.6; // 0 to 1
   private sectionFocus = 0; // 0=all, 1=strings, 2=woodwinds, 3=brass, 4=percussion
+
+  private loopEventId: number | null = null;
 
   async start(): Promise<void> {
     if (this.isStarted) return;
@@ -82,7 +88,47 @@ export class OrchestraEngine {
       volume: 0,
     }).connect(this.percussionGain);
 
+    // Theremin Synth (Smooth sine with portamento)
+    this.thereminSynth = new Tone.Synth({
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.1, decay: 0.2, sustain: 1.0, release: 0.5 },
+      portamento: 0.05,
+      volume: -4,
+    }).connect(this.reverb);
+
     this.isStarted = true;
+    this.setupTransportLoop();
+  }
+
+  private setupTransportLoop(): void {
+    if (this.loopEventId !== null) {
+      Tone.getTransport().clear(this.loopEventId);
+    }
+
+    Tone.getTransport().bpm.value = this.currentBpm;
+
+    this.loopEventId = Tone.getTransport().scheduleRepeat((time) => {
+      if (!this.isConducting) return;
+      this.playNextMeasureStep(time);
+    }, '4n');
+  }
+
+  /**
+   * Start or resume orchestral conducting playback
+   */
+  startConducting(): void {
+    if (!this.isStarted) return;
+    this.isConducting = true;
+    if (Tone.getTransport().state !== 'started') {
+      Tone.getTransport().start();
+    }
+  }
+
+  /**
+   * Pause conducting playback when hands leave frame
+   */
+  pauseConducting(): void {
+    this.isConducting = false;
   }
 
   /**
@@ -104,7 +150,11 @@ export class OrchestraEngine {
    * Set BPM from conductor gesture
    */
   setBpm(bpm: number): void {
-    this.currentBpm = Math.max(40, Math.min(240, bpm));
+    const clampedBpm = Math.max(40, Math.min(240, bpm));
+    this.currentBpm = clampedBpm;
+    if (this.isStarted) {
+      Tone.getTransport().bpm.rampTo(clampedBpm, 0.1);
+    }
   }
 
   getBpm(): number {
@@ -130,7 +180,7 @@ export class OrchestraEngine {
     if (!this.isStarted) return;
 
     const fullGain = 0.8;
-    const dimmedGain = 0.2;
+    const dimmedGain = 0.15;
 
     this.stringsGain.gain.rampTo(focus === 0 || focus === 1 ? fullGain : dimmedGain, 0.1);
     this.woodwindsGain.gain.rampTo(focus === 0 || focus === 2 ? fullGain : dimmedGain, 0.1);
@@ -139,49 +189,60 @@ export class OrchestraEngine {
   }
 
   /**
-   * Trigger beat — plays the next measure step in the current piece
+   * Play measure step scheduled by Tone.Transport
    */
-  triggerBeat(): void {
-    if (!this.isStarted) return;
-
+  private playNextMeasureStep(time: number): void {
     const piece = this.getCurrentPiece();
     if (!piece.measures || piece.measures.length === 0) return;
 
     const measure: MeasureData = piece.measures[this.currentBeat % piece.measures.length];
-    const now = Tone.now();
 
-    // Trigger strings
     if (measure.strings) {
       const notes = Array.isArray(measure.strings.note) ? measure.strings.note : [measure.strings.note];
-      this.stringsSynth.triggerAttackRelease(notes, measure.strings.duration, now);
+      this.stringsSynth.triggerAttackRelease(notes, measure.strings.duration, time);
     }
 
-    // Trigger woodwinds
     if (measure.woodwinds) {
       const notes = Array.isArray(measure.woodwinds.note) ? measure.woodwinds.note : [measure.woodwinds.note];
-      this.woodwindsSynth.triggerAttackRelease(notes, measure.woodwinds.duration, now);
+      this.woodwindsSynth.triggerAttackRelease(notes, measure.woodwinds.duration, time);
     }
 
-    // Trigger brass
     if (measure.brass) {
       const notes = Array.isArray(measure.brass.note) ? measure.brass.note : [measure.brass.note];
-      this.brassSynth.triggerAttackRelease(notes, measure.brass.duration, now);
+      this.brassSynth.triggerAttackRelease(notes, measure.brass.duration, time);
     }
 
-    // Trigger percussion
     if (measure.percussion) {
       const note = Array.isArray(measure.percussion.note) ? measure.percussion.note[0] : measure.percussion.note;
-      this.percussionSynth.triggerAttackRelease(note, measure.percussion.duration, now);
+      this.percussionSynth.triggerAttackRelease(note, measure.percussion.duration, time);
     }
 
     this.currentBeat++;
   }
 
+  /**
+   * Continuous pitch bend for Theremin mode
+   */
+  playTheremin(freqHz: number, volumeNorm: number): void {
+    if (!this.isStarted) return;
+    if (volumeNorm <= 0.05) {
+      this.thereminSynth.triggerRelease();
+    } else {
+      this.thereminSynth.setNote(freqHz);
+      this.thereminSynth.volume.rampTo(Tone.gainToDb(volumeNorm * 0.8), 0.05);
+    }
+  }
+
   dispose(): void {
+    Tone.getTransport().stop();
+    if (this.loopEventId !== null) {
+      Tone.getTransport().clear(this.loopEventId);
+    }
     this.stringsSynth?.dispose();
     this.woodwindsSynth?.dispose();
     this.brassSynth?.dispose();
     this.percussionSynth?.dispose();
+    this.thereminSynth?.dispose();
     this.stringsGain?.dispose();
     this.woodwindsGain?.dispose();
     this.brassGain?.dispose();

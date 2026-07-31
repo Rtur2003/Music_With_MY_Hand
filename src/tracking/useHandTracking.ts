@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — useHandTracking React Hook
-   Uses @mediapipe/tasks-vision npm package directly
+   Fixes "Video element not found" by waiting for enabled flag & DOM element
    ═══════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef, useState } from 'react';
@@ -19,7 +19,10 @@ export type HandTrackingStatus = 'idle' | 'requesting' | 'loading' | 'ready' | '
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
 const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 
-export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | null>) {
+export function useHandTracking(
+  videoRef: React.RefObject<HTMLVideoElement | null>,
+  enabled: boolean = false
+) {
   const [status, setStatus] = useState<HandTrackingStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const handsRef = useRef<TrackedHands>({ left: null, right: null });
@@ -27,10 +30,12 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
   const rafRef = useRef(0);
   const lastVideoTimeRef = useRef(-1);
 
-  // State to trigger React re-renders for components that need active hand data
   const [handsState, setHandsState] = useState<TrackedHands>({ left: null, right: null });
 
   useEffect(() => {
+    // Only initialize camera and AI model after user clicks start and video element exists
+    if (!enabled) return;
+
     let cancelled = false;
     let activeStream: MediaStream | null = null;
 
@@ -43,20 +48,30 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
           throw new Error('Camera API unavailable in this browser');
         }
 
+        const video = videoRef.current;
+        if (!video) {
+          // Wait a short moment if video element is mounting
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        const targetVideo = videoRef.current;
+        if (!targetVideo) {
+          throw new Error('Video element not found in DOM');
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
           audio: false,
         });
+
         if (cancelled) {
-          stream.getTracks().forEach(t => t.stop());
+          stream.getTracks().forEach((t) => t.stop());
           return;
         }
         activeStream = stream;
 
-        const video = videoRef.current;
-        if (!video) throw new Error('Video element not found');
-        video.srcObject = stream;
-        await video.play();
+        targetVideo.srcObject = stream;
+        await targetVideo.play();
 
         setStatus('loading');
 
@@ -124,7 +139,7 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
       } catch (err: any) {
         if (!cancelled) {
           setStatus('error');
-          setError(err.message || 'Unknown error');
+          setError(err.message || 'Unknown camera error');
         }
       }
     }
@@ -136,10 +151,10 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
       cancelAnimationFrame(rafRef.current);
       landmarkerRef.current?.close();
       if (activeStream) {
-        activeStream.getTracks().forEach(t => t.stop());
+        activeStream.getTracks().forEach((t) => t.stop());
       }
     };
-  }, [videoRef]);
+  }, [enabled, videoRef]);
 
   return { status, error, handsRef, handsState };
 }
