@@ -42,19 +42,22 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
 
   // Frame processing loop for conductor gestures
   useEffect(() => {
+    if (!leftHand && !rightHand) {
+      orchestraEngine.pauseConducting();
+      return;
+    }
+
+    // Hands are in frame -> start/resume conducting
+    orchestraEngine.startConducting();
+
     const timestamp = performance.now();
     const state = conductorProcessorRef.current.process(leftHand, rightHand, timestamp);
     setConductorState(state);
 
-    // Apply to Orchestra Engine
+    // Apply conductor controls continuously
     orchestraEngine.setBpm(state.bpm);
     orchestraEngine.setDynamics(state.dynamics);
     orchestraEngine.setSectionFocus(state.sectionFocus);
-
-    // If downbeat detected, trigger orchestra beat
-    if (state.beatDetected) {
-      orchestraEngine.triggerBeat();
-    }
   }, [leftHand, rightHand]);
 
   return (

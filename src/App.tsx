@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Main App Component
-   Single unified top header, mode switcher, and clean layout
+   Persistent video element and clean start sequence
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useRef, useState } from 'react';
@@ -16,10 +16,12 @@ export type AppMode = 'synth' | 'conductor';
 
 export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const { status, error, handsState } = useHandTracking(videoRef);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  // Initialize hand tracking ONLY when user clicks start (hasStarted = true)
+  const { status, error, handsState } = useHandTracking(videoRef, hasStarted);
 
   const [mode, setMode] = useState<AppMode>('synth');
-  const [hasStarted, setHasStarted] = useState(false);
 
   // Synth state
   const [currentKey, setCurrentKey] = useState('A');
@@ -70,6 +72,21 @@ export default function App() {
 
   return (
     <div className="app-root">
+      {/* Persistent hidden video element for MediaPipe camera feed */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+      />
+
       {!hasStarted ? (
         <div className="splash">
           <div className="splash__title">AuraSynth Pro</div>
