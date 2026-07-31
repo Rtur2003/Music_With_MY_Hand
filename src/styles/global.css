@@ -223,7 +223,7 @@ html, body, #root {
   50% { opacity: 0.6; }
 }
 
-/* ── Select (Key picker, etc.) ────────────────────────────── */
+/* ── Select ──────────────────────────────────────────────── */
 .glass-select {
   padding: 0.45rem 0.65rem;
   background: var(--glass-bg);
@@ -369,10 +369,6 @@ html, body, #root {
   box-shadow: 0 0 50px rgba(0, 255, 204, 0.4), 0 0 80px rgba(120, 80, 255, 0.2);
 }
 
-.splash__start-btn:active {
-  transform: scale(0.98);
-}
-
 /* ── Visualizer Canvas ────────────────────────────────────── */
 .visualizer-canvas {
   position: absolute;
@@ -384,37 +380,184 @@ html, body, #root {
   opacity: 0.6;
 }
 
-/* ── Loading spinner ──────────────────────────────────────── */
-.loading-indicator {
+/* ── Mode Switcher Tabs ───────────────────────────────────── */
+.mode-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.mode-tab {
+  padding: 0.35rem 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-tab--active {
+  background: rgba(0, 255, 204, 0.15);
+  color: var(--accent-cyan);
+}
+
+/* ── Conductor Center Display ────────────────────────────── */
+.conductor-center-display {
   position: absolute;
-  top: 50%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 50;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
+  pointer-events: none;
+  user-select: none;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-subtle);
-  border-top-color: var(--accent-cyan);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.bpm-gauge {
+  text-align: center;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.bpm-gauge__value {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 900;
+  color: var(--accent-gold);
+  text-shadow: 0 0 30px rgba(255, 170, 0, 0.4);
+  line-height: 1;
 }
 
-.loading-text {
+.bpm-gauge__label {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  margin-top: 0.25rem;
+}
+
+.dynamics-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 280px;
+}
+
+.dynamics-meter__value {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-magenta);
+  width: 35px;
+}
+
+.dynamics-meter__bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dynamics-meter__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+  border-radius: 4px;
+  transition: width 0.05s linear;
+}
+
+.dynamics-meter__label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
+}
+
+.section-badge {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  background: var(--glass-bg);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+}
+
+.badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.badge--crescendo {
+  background: rgba(0, 255, 204, 0.2);
+  color: var(--accent-cyan);
+  border: 1px solid var(--accent-cyan);
+}
+
+.badge--diminuendo {
+  background: rgba(255, 0, 255, 0.2);
+  color: var(--accent-magenta);
+  border: 1px solid var(--accent-magenta);
+}
+
+/* ── Orchestra Stage Visualizer (Seating Chart Arc) ──────── */
+.orchestra-stage-visualizer {
+  position: absolute;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 90%;
+  max-width: 600px;
+  pointer-events: none;
+}
+
+.orchestra-arc {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.orchestra-section {
+  padding: 0.75rem 0.5rem;
+  background: rgba(15, 15, 30, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-fast);
+}
+
+.orchestra-section.active {
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+  background: rgba(0, 255, 204, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+}
+
+.orchestra-section.dimmed {
+  opacity: 0.35;
+}
+
+.orchestra-section.pulse {
+  transform: scale(1.06);
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
