@@ -1,12 +1,12 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - STABLE MAIN CHORDS & 5-FRAME DEBOUNCER (v10.0)
+ * AURASYNTH PRO VST3 ULTIMATE - 12 EXPANDED PRESETS & INSTANT MORPHING (v10.5)
  * ============================================================================
- * Fixes:
- *  1. 5-Frame Strict Hysteresis Debouncer (Zero Finger Flickering / Instant Stability)
- *  2. Middle-C (MIDI 60) Musical Register (Pure Sweet Main Chords, Zero Low Mud)
- *  3. Sweet Open-Voiced Triads, 7ths, and Ambient 9th Pads
- *  4. Smooth Legato Transitions (80 ms Portamento)
+ * Features & Fixes:
+ *  1. 12 High-Fidelity Icon Presets (Violin, CS-80, Rhodes, Guitar, Brass, Choir, Organ, Marimba, Flute, Synthwave, Harp, 808 Bass)
+ *  2. Real-Time Dynamic Timbre Morphing on active playing voices
+ *  3. Dynamic Event Delegation for preset pill clicks
+ *  4. Pristine Normalized PeriodicWave cache
  * ============================================================================
  */
 
@@ -123,7 +123,7 @@ let fpsCount = 0;
 // Transposition Mapping Tables
 const KEY_OFFSETS = { "C": 0, "G": 7, "D": 2, "F": 5, "A": 9, "Bb": 10 };
 
-// PURE MAIN CHORDS (Middle C4 Basis - Sweet Open Harmonics)
+// PURE MAIN CHORDS (Middle C4 Basis = MIDI 60)
 const CHORD_STRUCTURES_SCALES = {
     major: {
         0: { name: "Mute", notesLabel: "Sessiz", intervals: [] },
@@ -161,13 +161,20 @@ const CHORD_STRUCTURES_SCALES = {
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+// 12 Mathematically Normalized Harmonic Profiles for Crystal-Clear Sound
 const WAVETABLE_HARMONICS = {
-    violin: [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
-    cs80:   [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
-    rhodes: [0, 1.0, 0.15, 0.4, 0.05, 0.1],
-    guitar: [0, 1.0, 0.6, 0.4, 0.2, 0.1],
-    brass:  [0, 1.0, 0.8, 0.6, 0.4, 0.2],
-    choir:  [0, 1.0, 0.2, 0.7, 0.1, 0.4]
+    violin:    [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
+    cs80:      [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
+    rhodes:    [0, 1.0, 0.15, 0.4, 0.05, 0.1],
+    guitar:    [0, 1.0, 0.6, 0.4, 0.2, 0.1],
+    brass:     [0, 1.0, 0.8, 0.6, 0.4, 0.2],
+    choir:     [0, 1.0, 0.2, 0.7, 0.1, 0.4],
+    organ:     [0, 1.0, 1.0, 0.8, 0.8, 0.6, 0.4, 0.2],
+    marimba:   [0, 1.0, 0.1, 0.8, 0.02, 0.3, 0.01],
+    flute:     [0, 1.0, 0.2, 0.05, 0.02],
+    synthwave: [0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3],
+    harp:      [0, 1.0, 0.7, 0.3, 0.1, 0.05],
+    subbass:   [0, 1.0, 0.4, 0.1]
 };
 
 // ============================================================================
@@ -296,7 +303,9 @@ function switchInstrumentPreset(newPresetKey) {
         const newWave = getOrCreateWavetable(currentPreset);
         activeVoices.forEach(voice => {
             if (voice.oscillators) {
-                try { voice.oscillators[0].setPeriodicWave(newWave); } catch(e){}
+                voice.oscillators.forEach(osc => {
+                    try { osc.setPeriodicWave(newWave); } catch(e){}
+                });
             }
         });
 
@@ -353,7 +362,6 @@ function initAudioEngine() {
     eqTrebleNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
     eqTrebleNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
-    // Open Cutoff Filter (8000 Hz)
     filterNode = audioCtx.createBiquadFilter();
     filterNode.type = "lowpass";
     filterNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
@@ -403,7 +411,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Stable Main Chords Engine Active.");
+    console.log("[AuraSynth PRO] Pristine Audio Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -416,7 +424,6 @@ function midiToNoteName(midi) {
     return `${name}${oct}`;
 }
 
-// MAIN CHORD CALCULATOR (Middle C4 Basis = MIDI 60)
 function getTransposedChord(fingerCount) {
     const scaleDict = CHORD_STRUCTURES_SCALES[currentScaleMode] || CHORD_STRUCTURES_SCALES.major;
     const chordInfo = scaleDict[fingerCount] || scaleDict[0];
@@ -426,7 +433,6 @@ function getTransposedChord(fingerCount) {
     }
 
     const keyOffset = KEY_OFFSETS[currentKey] || 0;
-    // MIDI 60 is Middle C4 (Pure, sweet main register)
     const baseMidi = 60 + keyOffset + (currentOctaveShift * 12);
 
     const freqs = [];
@@ -878,7 +884,7 @@ function playArpPluck(freq, time, duration) {
 }
 
 // ============================================================================
-// 5. RIGHT HAND EXPRESSION (CLEAN & PURE)
+// 5. RIGHT HAND EXPRESSION
 // ============================================================================
 function processRightHandExpression(landmarks) {
     if (!audioCtx || !isAudioRunning) return;
@@ -1128,7 +1134,6 @@ function countExtendedFingersRaw(landmarks) {
     return Math.max(0, Math.min(5, count));
 }
 
-// Strict 5-Frame Hysteresis Debouncer Guard
 function getDebouncedFingerCount(rawCount) {
     rawFingerHistory.push(rawCount);
     if (rawFingerHistory.length > DEBOUNCE_FRAMES) {
@@ -1315,7 +1320,7 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 8. EVENT LISTENERS & SHORTCUTS (H: Hide UI, M: Theme, C: Chaos)
+// 8. EVENT LISTENERS & SHORTCUTS (DYNAMIC DELEGATION FOR ALL 12 PRESETS)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
@@ -1340,8 +1345,13 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
     }
 
-    document.querySelectorAll(".preset-pill").forEach(pill => {
-        pill.addEventListener("click", () => {
+    // DYNAMIC EVENT DELEGATION FOR ALL 12 PRESET BUTTONS
+    const presetBar = document.querySelector(".preset-pill-bar");
+    if (presetBar) {
+        presetBar.addEventListener("click", (e) => {
+            const pill = e.target.closest(".preset-pill");
+            if (!pill) return;
+
             document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
             pill.classList.add("active");
 
@@ -1351,7 +1361,7 @@ window.addEventListener("DOMContentLoaded", () => {
             const sel = document.getElementById("preset-select");
             if (sel) sel.value = newPreset;
         });
-    });
+    }
 
     document.querySelectorAll(".rack-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {

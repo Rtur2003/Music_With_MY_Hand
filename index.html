@@ -49,7 +49,7 @@
                     <span class="vst-brand">AURASYNTH <span class="badge-pro">PRO VST3</span></span>
                 </div>
 
-                <!-- INSTANT INSTRUMENT PRESET CARDS -->
+                <!-- 12 ICONIC INSTRUMENT PRESET CARDS -->
                 <div class="preset-pill-bar">
                     <button class="preset-pill active" data-preset="violin">🎻 VIOLIN</button>
                     <button class="preset-pill" data-preset="cs80">🌌 CS-80</button>
@@ -57,6 +57,12 @@
                     <button class="preset-pill" data-preset="guitar">🎸 GUITAR</button>
                     <button class="preset-pill" data-preset="brass">🎺 BRASS</button>
                     <button class="preset-pill" data-preset="choir">🔮 CHOIR</button>
+                    <button class="preset-pill" data-preset="organ">🎹 ORGAN</button>
+                    <button class="preset-pill" data-preset="marimba">🪵 MARIMBA</button>
+                    <button class="preset-pill" data-preset="flute">🪈 FLUTE</button>
+                    <button class="preset-pill" data-preset="synthwave">🌃 SYNTHWAVE</button>
+                    <button class="preset-pill" data-preset="harp">𝄢 HARP</button>
+                    <button class="preset-pill" data-preset="subbass">🔊 808 BASS</button>
                 </div>
 
                 <div class="header-actions">
@@ -78,7 +84,7 @@
                 <button class="rack-tab-btn" data-tab="tab-env">🌌 3D MEKAN & MIDI</button>
             </nav>
 
-            <!-- GRAPHICAL HIGH-TECH HELP GUIDE DRAWER (NO PLAIN TEXT) -->
+            <!-- GRAPHICAL HIGH-TECH HELP DRAWER (NO PLAIN TEXT) -->
             <div id="help-drawer" class="vst-help-drawer hidden">
                 <div class="drawer-header">
                     <span class="drawer-title">🎛️ AURASYNTH PRO - JEST İLE KONTROL REHBERİ</span>
@@ -263,8 +269,8 @@
                         <div class="sliders-row-2">
                             <div class="slider-box">
                                 <span class="knob-tag">GLIDE (PORTAMENTO)</span>
-                                <input type="range" id="slider-glide" min="0.05" max="0.8" step="0.05" value="0.25" class="vst-range-lg">
-                                <span class="val-readout-lg" id="val-glide">250 ms</span>
+                                <input type="range" id="slider-glide" min="0.05" max="0.8" step="0.05" value="0.08" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-glide">80 ms</span>
                             </div>
                             <div class="slider-box">
                                 <span class="knob-tag">MASTER VOLUME</span>
@@ -370,8 +376,8 @@
                 <div class="telemetry-bar">
                     <div class="gauge-compact">
                         <span class="gauge-label">CUTOFF (Y)</span>
-                        <span class="gauge-val" id="gauge-cutoff">1200 Hz</span>
-                        <div class="meter-fill" id="bar-cutoff" style="width: 35%;"></div>
+                        <span class="gauge-val" id="gauge-cutoff">8000 Hz</span>
+                        <div class="meter-fill" id="bar-cutoff" style="width: 70%;"></div>
                     </div>
                     <div class="gauge-compact">
                         <span class="gauge-label">3D DEPTH (Z)</span>
@@ -380,8 +386,8 @@
                     </div>
                     <div class="gauge-compact">
                         <span class="gauge-label">VIBRATO</span>
-                        <span class="gauge-val" id="gauge-vibrato">0 %</span>
-                        <div class="meter-fill meter-purple" id="bar-vibrato" style="width: 0%;"></div>
+                        <span class="gauge-val" id="gauge-vibrato">STABLE (100%)</span>
+                        <div class="meter-fill meter-purple" id="bar-vibrato" style="width: 100%;"></div>
                     </div>
                     <div class="gauge-compact">
                         <span class="gauge-label">STEREO PAN (X)</span>
@@ -449,6 +455,12 @@
         <option value="guitar">guitar</option>
         <option value="brass">brass</option>
         <option value="choir">choir</option>
+        <option value="organ">organ</option>
+        <option value="marimba">marimba</option>
+        <option value="flute">flute</option>
+        <option value="synthwave">synthwave</option>
+        <option value="harp">harp</option>
+        <option value="subbass">subbass</option>
     </select>
 
     <!-- Main Application JavaScript -->
