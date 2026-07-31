@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AURASYNTH PRO VST3 ULTIMATE - 12 PRESET PILLS & STYLING v10.1
+   AURASYNTH PRO VST3 ULTIMATE - PRESET BROWSER DROPDOWN & SUSTAIN STYLING v11.0
    ========================================================================== */
 
 :root {
@@ -165,7 +165,7 @@ html, body {
     border: 1px solid var(--panel-border);
     border-radius: var(--radius-sm);
     padding: 8px 14px;
-    gap: 8px;
+    gap: 12px;
 }
 
 .brand-block { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -174,36 +174,43 @@ html, body {
 .vst-brand { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; letter-spacing: 1px; color: #fff; white-space: nowrap; }
 .badge-pro { font-size: 0.55rem; background: rgba(0, 195, 255, 0.15); color: var(--led-cyan); border: 1px solid rgba(0, 195, 255, 0.3); padding: 2px 5px; border-radius: 3px; font-weight: 700; }
 
-/* INSTANT PRESET PILL BAR */
-.preset-pill-bar {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    max-width: 60%;
-    scrollbar-width: thin;
-}
+/* PRESET BROWSER DROPDOWN & SUSTAIN BUTTON */
+.preset-browser-bar { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; }
 
-.preset-pill {
+.vst-select-preset {
     background: #11131c;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 195, 255, 0.3);
+    color: var(--led-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 195, 255, 0.15);
+    transition: all 0.2s ease;
+    max-width: 260px;
+}
+.vst-select-preset:hover { border-color: var(--led-cyan); box-shadow: 0 0 12px rgba(0, 195, 255, 0.3); }
+
+.vst-sustain-btn {
+    background: #181c2b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: var(--text-secondary);
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    padding: 5px 10px;
+    padding: 6px 14px;
     border-radius: 20px;
     cursor: pointer;
-    white-space: nowrap;
     transition: all 0.2s ease;
-    flex-shrink: 0;
 }
-.preset-pill:hover { border-color: rgba(255, 255, 255, 0.3); color: #fff; }
-.preset-pill.active {
-    background: rgba(0, 195, 255, 0.18);
-    border-color: var(--led-cyan);
-    color: #fff;
-    box-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
+.vst-sustain-btn.active {
+    background: rgba(255, 204, 0, 0.18);
+    border-color: var(--led-gold);
+    color: var(--led-gold);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
 }
 
 .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }

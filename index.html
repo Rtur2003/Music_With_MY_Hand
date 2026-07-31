@@ -49,20 +49,26 @@
                     <span class="vst-brand">AURASYNTH <span class="badge-pro">PRO VST3</span></span>
                 </div>
 
-                <!-- 12 ICONIC INSTRUMENT PRESET CARDS -->
-                <div class="preset-pill-bar">
-                    <button class="preset-pill active" data-preset="violin">🎻 VIOLIN</button>
-                    <button class="preset-pill" data-preset="cs80">🌌 CS-80</button>
-                    <button class="preset-pill" data-preset="rhodes">🎹 RHODES</button>
-                    <button class="preset-pill" data-preset="guitar">🎸 GUITAR</button>
-                    <button class="preset-pill" data-preset="brass">🎺 BRASS</button>
-                    <button class="preset-pill" data-preset="choir">🔮 CHOIR</button>
-                    <button class="preset-pill" data-preset="organ">🎹 ORGAN</button>
-                    <button class="preset-pill" data-preset="marimba">🪵 MARIMBA</button>
-                    <button class="preset-pill" data-preset="flute">🪈 FLUTE</button>
-                    <button class="preset-pill" data-preset="synthwave">🌃 SYNTHWAVE</button>
-                    <button class="preset-pill" data-preset="harp">𝄢 HARP</button>
-                    <button class="preset-pill" data-preset="subbass">🔊 808 BASS</button>
+                <!-- PRESET BROWSER DROPDOWN & QUICK PILLS -->
+                <div class="preset-browser-bar">
+                    <select id="preset-select-dropdown" class="vst-select-preset">
+                        <option value="violin" selected>🎻 Stradivarius Violin</option>
+                        <option value="cs80">🌌 CS-80 Synth Brass</option>
+                        <option value="rhodes">🎹 Rhodes Electric Piano</option>
+                        <option value="guitar">🎸 Acoustic Pluck Guitar</option>
+                        <option value="brass">🎺 Moog Horn Stack</option>
+                        <option value="choir">🔮 Gregorian Formant Choir</option>
+                        <option value="organ">🎹 Hammond B3 Organ</option>
+                        <option value="marimba">🪵 Percussive Marimba</option>
+                        <option value="flute">🪈 Silver Orchestral Flute</option>
+                        <option value="synthwave">🌃 80s Cyberpunk Saw</option>
+                        <option value="harp">𝄢 Celestial Concert Harp</option>
+                        <option value="subbass">🔊 808 Deep Sub Bass</option>
+                    </select>
+
+                    <button id="btn-sustain-pedal" class="vst-sustain-btn" title="Kamera Kadrajından Çıkınca Notayı Tut (S)">
+                        🦶 SUSTAIN (OFF)
+                    </button>
                 </div>
 
                 <div class="header-actions">
@@ -79,12 +85,13 @@
             <!-- MODULAR RACK TAB SELECTOR BAR -->
             <nav class="rack-tab-bar">
                 <button class="rack-tab-btn active" data-tab="tab-synth">🎛️ SENTEZ & AKOR</button>
+                <button class="rack-tab-btn" data-tab="tab-adsr">📈 ADSR ZARF MODÜLATÖRÜ</button>
                 <button class="rack-tab-btn" data-tab="tab-eq">🎚️ STÜDYO EQ</button>
                 <button class="rack-tab-btn" data-tab="tab-looper">🔁 LOOPER & ARP</button>
                 <button class="rack-tab-btn" data-tab="tab-env">🌌 3D MEKAN & MIDI</button>
             </nav>
 
-            <!-- GRAPHICAL HIGH-TECH HELP DRAWER (NO PLAIN TEXT) -->
+            <!-- GRAPHICAL HIGH-TECH HELP DRAWER -->
             <div id="help-drawer" class="vst-help-drawer hidden">
                 <div class="drawer-header">
                     <span class="drawer-title">🎛️ AURASYNTH PRO - JEST İLE KONTROL REHBERİ</span>
@@ -236,7 +243,48 @@
                 </div>
             </div>
 
-            <!-- TAB 2: STÜDYO EQ & MASTER DYNAMICS -->
+            <!-- NEW TAB: ADSR ENVELOPE MODULATOR -->
+            <div id="tab-adsr" class="tab-panel">
+                <div class="panel-row">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span class="card-title">📈 DİNAMİK ADSR ZARF ŞEKİLLENDİRİCİ</span>
+                        </div>
+                        <div class="sliders-row-2">
+                            <div class="slider-box">
+                                <span class="knob-tag">ATTACK (BAŞLAMA)</span>
+                                <input type="range" id="slider-adsr-attack" min="0.01" max="2.0" step="0.01" value="0.04" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-adsr-attack">40 ms</span>
+                            </div>
+                            <div class="slider-box">
+                                <span class="knob-tag">DECAY (DÜŞÜŞ)</span>
+                                <input type="range" id="slider-adsr-decay" min="0.05" max="2.0" step="0.05" value="0.12" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-adsr-decay">120 ms</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <span class="card-title">📉 SUSTAIN & RELEASE KONTROLÜ</span>
+                        </div>
+                        <div class="sliders-row-2">
+                            <div class="slider-box">
+                                <span class="knob-tag">SUSTAIN (TUTMA)</span>
+                                <input type="range" id="slider-adsr-sustain" min="0.1" max="1.0" step="0.05" value="0.75" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-adsr-sustain">75 %</span>
+                            </div>
+                            <div class="slider-box">
+                                <span class="knob-tag">RELEASE (BIRAKMA)</span>
+                                <input type="range" id="slider-adsr-release" min="0.05" max="3.0" step="0.05" value="0.18" class="vst-range-lg">
+                                <span class="val-readout-lg" id="val-adsr-release">180 ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: STÜDYO EQ & MASTER DYNAMICS -->
             <div id="tab-eq" class="tab-panel">
                 <div class="panel-row">
                     <div class="panel-card">
@@ -282,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: LOOPER & ARPEGGIATOR -->
+            <!-- TAB 4: LOOPER & ARPEGGIATOR -->
             <div id="tab-looper" class="tab-panel">
                 <div class="panel-row">
                     <div class="panel-card">
@@ -328,7 +376,7 @@
                 </div>
             </div>
 
-            <!-- TAB 4: 3D MEKAN & WEBMIDI -->
+            <!-- TAB 5: 3D MEKAN & WEBMIDI -->
             <div id="tab-env" class="tab-panel">
                 <div class="panel-row">
                     <div class="panel-card">
