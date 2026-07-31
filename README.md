@@ -1,4 +1,4 @@
-# AuraSynth Pro VST3 Ultimate Edition (v10.5)
+# AuraSynth Pro VST3 Ultimate Edition (v12.0)
 
 [![System Status](https://img.shields.io/badge/Audio_Engine-Active_96kHz-00c3ff.svg)](#)
 [![MediaPipe](https://img.shields.io/badge/Tracking-MediaPipe_60FPS-af52de.svg)](#)
@@ -7,31 +7,31 @@
 > **Professional Gestural Audio Synthesizer & Generative 3D Visual Environment Engine**  
 > *Profesyonel El Takibi ile Kontrol Edilen Sentezör ve 3D Görsel Atmosfer Motoru*
 
-![AuraSynth Pro VST Showcase](C:\Users\MONSTER\.gemini\antigravity\brain\9e0bfc2f-8eb5-4a8e-82b2-a8d6dc98f111\aurasynth_vst_showcase_1785510450220.png)
-
 ---
 
 ## 🇹🇷 TÜRKÇE KULLANIM KILAVUZU & TEKNİK DOKÜMANTASYON
 
 ### 🎛️ Genel Bakış ve Donanım Mimarisi
-AuraSynth Pro VST3, kamera tabanlı el takibini düşük gecikmeli Web Audio API sentezleme mimarisiyle birleştiren bağımsız bir dijital enstrümandır. Sinyal akışı stüdyo donanımlarındaki gibi modüler 4 ana sekmeden oluşur:
+AuraSynth Pro VST3, kamera tabanlı el takibini düşük gecikmeli Web Audio API sentezleme mimarisiyle birleştiren bağımsız bir dijital enstrümandır. Sinyal akışı stüdyo donanımlarındaki gibi modüler 5 ana sekmeden oluşur:
 
 1. **🎛️ Sentez & Akor Pad Matrisi**: 12 Tonal Preset, Gam Filtreleri (Majör, Minör, Pentatonik, Hicaz, Dorian) ve Oktav Değiştirici.
-2. **🎚️ Stüdyo 3-Band Parametrik EQ**: Low-Shelf (100Hz), Peaking Mid (1kHz) ve High-Shelf (8kHz) stüdyo frekans düzenleyici.
-3. **🔁 Canlı Looper & Arpeggiator**: 4-Kanal Jest Kaydedici, Dahili Metronom (BPM) ve Yönlü Arpeggiator.
-4. **🌌 3D Görsel Mekan & WebMIDI Output**: Sese duyarlı prosedürel ortamlar ve Ableton Live, FL Studio, Logic Pro için harici WebMIDI sürücüsü.
+2. **📈 Dynamic ADSR Zarf Modülatörü**: Attack, Decay, Sustain ve Release zaman şekillendiricileri.
+3. **🎚️ Stüdyo EQ & Spatial FX**: 3-Band Parametrik EQ, Portamento Glide, Stereo Delay Time/Feedback, Chorus Detune ve Reverb Wet Mix.
+4. **🔁 Canlı Looper & Arpeggiator**: 4-Kanal Jest Kaydedici, WAV Kaydedici ve **.MID Standard MIDI Dosyası Dışa Aktarıcı**.
+5. **🌌 3D Görsel Mekan & WebMIDI Output/Input**: Sese duyarlı ortamlar, Ableton Live / FL Studio WebMIDI çıkışı ve USB MIDI klavye girdisi.
+6. **🎹 25-Key Canlı Görsel Piyano Klavyesi**: Çalınan notaları ve akorları anlık olarak ışıklandıran stüdyo klavye visualizer'ı.
 
 ---
 
-### 🖐️ Sol El: Akor Jest Matrisi
-| Parmak Sayısı | Akor Tipi | Frekans ve Tonal Yapı |
+### 🖐️ Sol El & Klavye: Akor Jest Matrisi
+| Parmak / Tuş | Akor Tipi | Frekans ve Tonal Yapı |
 | :--- | :--- | :--- |
-| **☝️ 1 Parmak** | Solo Lead / Root | Middle C4 Solo Lead |
-| **✌️ 2 Parmak** | Majör Triad | Saf Majör Akor (C4 - E4 - G4) |
-| **🤟 3 Parmak** | Minör Triad | Saf Minör Akor (C4 - Eb4 - G4) |
-| **🖖 4 Parmak** | 7'li Akor | Caz / Pop 7th (C4 - E4 - G4 - Bb4) |
-| **🖐️ 5 Parmak** | Ambient Pad 9th | Zengin Ambient Pad (C4 - G4 - C5 - D5) |
-| **✊ Yumruk** | Mute | Sessiz Mod (Sustur) |
+| **☝️ 1 / Tuş '1'** | Solo Lead / Root | Middle C4 Solo Lead |
+| **✌️ 2 / Tuş '2'** | Majör Triad | Saf Majör Akor (C4 - E4 - G4) |
+| **🤟 3 / Tuş '3'** | Minör Triad | Saf Minör Akor (C4 - Eb4 - G4) |
+| **🖖 4 / Tuş '4'** | 7'li Akor | Caz / Pop 7th (C4 - E4 - G4 - Bb4) |
+| **🖐️ 5 / Tuş '5'** | Ambient Pad 9th | Zengin Ambient Pad (C4 - G4 - C5 - D5) |
+| **✊ Yumruk / '0'** | Mute | Sessiz Mod (Sustur) |
 
 ### 🎛️ Sağ El: 3D Expression Kontrolleri
 * **Y-Aksı (Dikey)**: Cutoff Filtresi Frekansı ($800\text{ Hz} \rightarrow 12.000\text{ Hz}$) (MIDI CC #74).
@@ -57,10 +57,13 @@ AuraSynth Pro VST3, kamera tabanlı el takibini düşük gecikmeli Web Audio API
 
 ---
 
-### ⌨️ Klavye Kısayolları
-* **`H`**: Sinema Modu (Arayüzü Gizle / Göster)
-* **`M`**: 3D Görsel Atmosfer Değiştir (Warp $\rightarrow$ Polygons $\rightarrow$ Aurora $\rightarrow$ Burst)
-* **`C`**: Kaos Modu (Jeneratif Renk & Geometri Mutasyonu)
+### ⌨️ Klavye Kısayolları & QWERTY Çalma
+* **`1` - `5` / `0`**: Sol el akor jestlerini doğrudan klavyeden tetikle.
+* **`A` - `K`**: C4'ten C5'e kromatik tekli piyano notaları çal (A:Do, W:Do#, S:Re, E:Re#, D:Mi, F:Fa, T:Fa#, G:Sol, Y:Sol#, H:La, U:La#, J:Si, K:Do).
+* **`S`**: Sustain Pedal Modunu Aç / Kapat.
+* **`H`**: Sinema Modu (Arayüzü Gizle / Göster).
+* **`M`**: 3D Görsel Atmosfer Değiştir (Warp $\rightarrow$ Polygons $\rightarrow$ Aurora $\rightarrow$ Burst).
+* **`C`**: Kaos Modu (Jeneratif Renk & Geometri Mutasyonu).
 
 ---
 
