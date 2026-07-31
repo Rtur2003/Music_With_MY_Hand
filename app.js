@@ -281,9 +281,32 @@ function populateMidiOutputs() {
         select.appendChild(opt);
     });
 
-    if (outputs.length > 0) {
+    const inputs = Array.from(midiAccess.inputs.values());
+    inputs.forEach(input => {
+        input.onmidimessage = handleMidiInputMessage;
+    });
+
+    if (outputs.length > 0 || inputs.length > 0) {
         const bar = document.getElementById("midi-status-bar");
-        if (bar) bar.textContent = `MIDI: ${outputs.length} Cihaz Bağlı (DAW Out Ready)`;
+        if (bar) bar.textContent = `MIDI: ${outputs.length} Çıkış / ${inputs.length} Giriş Bağlı`;
+    }
+}
+
+function handleMidiInputMessage(event) {
+    if (!event.data || event.data.length < 3) return;
+    const [status, note, velocity] = event.data;
+    const command = status & 0xF0;
+
+    if (command === 0x90 && velocity > 0) {
+        playSinglePianoNote(note);
+    } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+        // Release note if applicable
+    } else if (command === 0xB0) {
+        if (note === 74) {
+            const freq = 800 + (velocity / 127.0) * 11200;
+            if (filterNode && audioCtx) filterNode.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.05);
+            rightMetrics.cutoffHz = Math.round(freq);
+        }
     }
 }
 
