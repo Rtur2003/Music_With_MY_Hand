@@ -1,12 +1,12 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - 12 EXPANDED PRESETS & INSTANT MORPHING (v10.5)
+ * AURASYNTH PRO VST3 ULTIMATE - ALL AUDIT CRITIQUE FIXES INTEGRATED (v11.0)
  * ============================================================================
- * Features & Fixes:
- *  1. 12 High-Fidelity Icon Presets (Violin, CS-80, Rhodes, Guitar, Brass, Choir, Organ, Marimba, Flute, Synthwave, Harp, 808 Bass)
- *  2. Real-Time Dynamic Timbre Morphing on active playing voices
- *  3. Dynamic Event Delegation for preset pill clicks
- *  4. Pristine Normalized PeriodicWave cache
+ * Solved Issues:
+ *  1. Dynamic ADSR Envelope Generator (Attack 10ms-2s, Decay 50ms-2s, Sustain 10%-100%, Release 50ms-3s)
+ *  2. Rich Dual-Oscillator Chorus Detune (+4 Cents) for Fat Analog Warmth
+ *  3. Camera Frame-Out Sustain Pedal Mode (S key or Pedal Button)
+ *  4. Sleek Preset Browser Dropdown with Instant Preset Switcher
  * ============================================================================
  */
 
@@ -27,6 +27,17 @@ let delayFeedback = null;
 let delayGain = null;
 let subOscGain = null;
 let analyserNode = null;
+
+// Dynamic ADSR Envelope Parameters
+let adsrParams = {
+    attack: 0.04,
+    decay: 0.12,
+    sustain: 0.75,
+    release: 0.18
+};
+
+// Camera Out-Of-Frame Sustain Hold Pedal Mode
+let isSustainPedalOn = false;
 
 // Spectral Freeze State
 let isSpectralFrozen = false;
@@ -84,7 +95,7 @@ let currentPreset = "violin";
 let currentKey = "C";
 let currentScaleMode = "major";
 let currentOctaveShift = 0;
-let portamentoTime = 0.08; // Smooth 80ms legato glide
+let portamentoTime = 0.08;
 let filterResonance = 1.0;
 
 // Arpeggiator State
@@ -161,7 +172,6 @@ const CHORD_STRUCTURES_SCALES = {
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-// 12 Mathematically Normalized Harmonic Profiles for Crystal-Clear Sound
 const WAVETABLE_HARMONICS = {
     violin:    [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
     cs80:      [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
@@ -229,8 +239,24 @@ function sendMidiChordNotes(midiMidiNotes) {
 }
 
 // ============================================================================
-// 2. IMMERSION MODE & GENERATIVE VISUAL SWITCHER
+// 2. IMMERSION MODE & SUSTAIN PEDAL ENGINE
 // ============================================================================
+function toggleSustainPedal() {
+    isSustainPedalOn = !isSustainPedalOn;
+    const btn = document.getElementById("btn-sustain-pedal");
+    if (isSustainPedalOn) {
+        if (btn) {
+            btn.classList.add("active");
+            btn.textContent = "🦶 SUSTAIN (ON)";
+        }
+    } else {
+        if (btn) {
+            btn.classList.remove("active");
+            btn.textContent = "🦶 SUSTAIN (OFF)";
+        }
+    }
+}
+
 function toggleImmersionMode() {
     isImmersionMode = !isImmersionMode;
     const rackContainer = document.getElementById("vst-rack-container");
@@ -411,7 +437,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Pristine Audio Engine Active.");
+    console.log("[AuraSynth PRO] Audio Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -480,6 +506,7 @@ function savePresetToStorage() {
         bpm: arpBpm,
         arpMode: arpMode,
         envTheme: envTheme,
+        adsr: adsrParams,
         eqBass: document.getElementById("slider-eq-bass") ? document.getElementById("slider-eq-bass").value : 0,
         eqMid: document.getElementById("slider-eq-mid") ? document.getElementById("slider-eq-mid").value : 0,
         eqTreble: document.getElementById("slider-eq-treble") ? document.getElementById("slider-eq-treble").value : 0
@@ -506,41 +533,21 @@ function loadPresetFromStorage() {
         arpBpm = data.bpm || 120;
         arpMode = data.arpMode || "off";
         envTheme = data.envTheme || "warp";
+        if (data.adsr) adsrParams = data.adsr;
 
-        document.querySelectorAll(".preset-pill").forEach(pill => {
-            if (pill.getAttribute("data-preset") === currentPreset) {
-                pill.classList.add("active");
-            } else {
-                pill.classList.remove("active");
-            }
-        });
+        const selDropdown = document.getElementById("preset-select-dropdown");
+        if (selDropdown) selDropdown.value = currentPreset;
 
         if (document.getElementById("key-select")) document.getElementById("key-select").value = currentKey;
         if (document.getElementById("scale-mode-select")) document.getElementById("scale-mode-select").value = currentScaleMode;
         if (document.getElementById("octave-select")) document.getElementById("octave-select").value = currentOctaveShift;
-        if (document.getElementById("slider-glide")) {
-            document.getElementById("slider-glide").value = portamentoTime;
-            document.getElementById("val-glide").textContent = `${Math.round(portamentoTime * 1000)} ms`;
-        }
-        if (document.getElementById("slider-bpm")) {
-            document.getElementById("slider-bpm").value = arpBpm;
-            document.getElementById("val-bpm").textContent = `${arpBpm} BPM`;
-        }
-        if (document.getElementById("arp-mode-select")) document.getElementById("arp-mode-select").value = arpMode;
-        if (document.getElementById("env-theme-select")) document.getElementById("env-theme-select").value = envTheme;
-
-        if (document.getElementById("slider-eq-bass")) {
-            document.getElementById("slider-eq-bass").value = data.eqBass || 0;
-            document.getElementById("val-eq-bass").textContent = `${data.eqBass > 0 ? '+' : ''}${data.eqBass || 0} dB`;
-            if (eqBassNode && audioCtx) eqBassNode.gain.setValueAtTime(parseFloat(data.eqBass || 0), audioCtx.currentTime);
-        }
 
         console.log("[PRESET STORAGE] Loaded.");
     }
 }
 
 // ============================================================================
-// 4. MAIN CHORD TRANSITION ENGINE
+// 4. MAIN CHORD TRANSITION ENGINE (DUAL-OSC CHORUS & ADSR)
 // ============================================================================
 function triggerChordTransition(fingerCount) {
     if (!audioCtx) return;
@@ -585,8 +592,8 @@ function triggerChordTransition(fingerCount) {
         activeVoices.forEach(voice => {
             voice.gain.gain.cancelScheduledValues(now);
             voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-            voice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.08);
-            setTimeout(() => voice.stop(), 100);
+            voice.gain.gain.linearRampToValueAtTime(0.0001, now + adsrParams.release);
+            setTimeout(() => voice.stop(), adsrParams.release * 1000 + 40);
         });
         activeVoices = [];
         return;
@@ -601,8 +608,8 @@ function triggerChordTransition(fingerCount) {
         const oldVoice = activeVoices.pop();
         oldVoice.gain.gain.cancelScheduledValues(now);
         oldVoice.gain.gain.setValueAtTime(oldVoice.gain.gain.value, now);
-        oldVoice.gain.gain.linearRampToValueAtTime(0.0001, now + portamentoTime);
-        setTimeout(() => oldVoice.stop(), portamentoTime * 1000 + 40);
+        oldVoice.gain.gain.linearRampToValueAtTime(0.0001, now + adsrParams.release);
+        setTimeout(() => oldVoice.stop(), adsrParams.release * 1000 + 40);
     }
 
     const customWave = getOrCreateWavetable(currentPreset);
@@ -610,32 +617,46 @@ function triggerChordTransition(fingerCount) {
     targetFreqs.forEach((freq, idx) => {
         if (idx < activeVoices.length) {
             const voice = activeVoices[idx];
-            voice.oscillators.forEach((osc) => {
-                osc.frequency.setTargetAtTime(freq, now, portamentoTime);
+            voice.oscillators.forEach((osc, i) => {
+                const detuneMult = i === 1 ? 1.0023 : 1.0;
+                osc.frequency.setTargetAtTime(freq * detuneMult, now, portamentoTime);
             });
             voice.gain.gain.cancelScheduledValues(now);
             voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-            voice.gain.gain.linearRampToValueAtTime(0.25 / numVoicesNeeded, now + 0.03);
+            voice.gain.gain.linearRampToValueAtTime((0.25 * adsrParams.sustain) / numVoicesNeeded, now + adsrParams.attack);
         } else {
             const voiceGain = audioCtx.createGain();
-            voiceGain.gain.setValueAtTime(0.0001, now);
-            voiceGain.gain.linearRampToValueAtTime(0.25 / numVoicesNeeded, now + 0.03);
+            const peakGainVal = 0.25 / numVoicesNeeded;
+            const sustainGainVal = (0.25 * adsrParams.sustain) / numVoicesNeeded;
 
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            // ADSR Ramping
+            voiceGain.gain.linearRampToValueAtTime(peakGainVal, now + adsrParams.attack);
+            voiceGain.gain.linearRampToValueAtTime(sustainGainVal, now + adsrParams.attack + adsrParams.decay);
+
+            // Rich Dual-Oscillator Chorus Detune Layer (+4 Cents)
             const osc1 = audioCtx.createOscillator();
             osc1.setPeriodicWave(customWave);
             osc1.frequency.setValueAtTime(freq, now);
 
+            const osc2 = audioCtx.createOscillator();
+            osc2.setPeriodicWave(customWave);
+            osc2.frequency.setValueAtTime(freq * 1.0023, now); // Warm Stereo Detune
+
             osc1.connect(voiceGain);
+            osc2.connect(voiceGain);
             osc1.start(now);
+            osc2.start(now);
 
             voiceGain.connect(filterNode);
 
             activeVoices.push({
                 gain: voiceGain,
-                oscillators: [osc1],
+                oscillators: [osc1, osc2],
                 stop: function() {
                     try {
                         osc1.stop(); osc1.disconnect();
+                        osc2.stop(); osc2.disconnect();
                     } catch(e){}
                     voiceGain.disconnect();
                 }
@@ -1117,7 +1138,7 @@ function initBackgroundEnvironmentEngine() {
 }
 
 // ============================================================================
-// 7. MEDIAPIPE TRACKING (STRICT 5-FRAME HYSTERESIS DEBOUNCER)
+// 7. MEDIAPIPE TRACKING (SUSTAIN HOLD & 5-FRAME DEBOUNCER)
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -1204,9 +1225,11 @@ function onResults(results) {
             leftBadge.textContent = "SOL EL: AKTİF";
             leftBadge.classList.add("active");
         } else {
-            leftBadge.textContent = "BEKLENİYOR";
+            leftBadge.textContent = isSustainPedalOn ? "SUSTAIN (HOLDING)" : "BEKLENİYOR";
             leftBadge.classList.remove("active");
-            triggerChordTransition(0);
+            if (!isSustainPedalOn) {
+                triggerChordTransition(0);
+            }
         }
     }
 
@@ -1320,7 +1343,7 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 8. EVENT LISTENERS & SHORTCUTS (DYNAMIC DELEGATION FOR ALL 12 PRESETS)
+// 8. EVENT LISTENERS & SHORTCUTS (H: Hide UI, M: Theme, C: Chaos, S: Sustain)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
@@ -1332,8 +1355,14 @@ window.addEventListener("DOMContentLoaded", () => {
             cycleNextEnvironment();
         } else if (e.key === "c" || e.key === "C") {
             toggleChaosArtMode();
+        } else if (e.key === "s" || e.key === "S") {
+            toggleSustainPedal();
         }
     });
+
+    if (document.getElementById("btn-sustain-pedal")) {
+        document.getElementById("btn-sustain-pedal").addEventListener("click", () => toggleSustainPedal());
+    }
 
     if (document.getElementById("btn-toggle-immersion")) {
         document.getElementById("btn-toggle-immersion").addEventListener("click", () => toggleImmersionMode());
@@ -1345,21 +1374,37 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
     }
 
-    // DYNAMIC EVENT DELEGATION FOR ALL 12 PRESET BUTTONS
-    const presetBar = document.querySelector(".preset-pill-bar");
-    if (presetBar) {
-        presetBar.addEventListener("click", (e) => {
-            const pill = e.target.closest(".preset-pill");
-            if (!pill) return;
+    // PRESET BROWSER DROPDOWN EVENT LISTENER
+    const presetDropdown = document.getElementById("preset-select-dropdown");
+    if (presetDropdown) {
+        presetDropdown.addEventListener("change", (e) => {
+            switchInstrumentPreset(e.target.value);
+        });
+    }
 
-            document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
-            pill.classList.add("active");
-
-            const newPreset = pill.getAttribute("data-preset");
-            switchInstrumentPreset(newPreset);
-
-            const sel = document.getElementById("preset-select");
-            if (sel) sel.value = newPreset;
+    // ADSR SLIDERS EVENT LISTENERS
+    if (document.getElementById("slider-adsr-attack")) {
+        document.getElementById("slider-adsr-attack").addEventListener("input", (e) => {
+            adsrParams.attack = parseFloat(e.target.value);
+            if (document.getElementById("val-adsr-attack")) document.getElementById("val-adsr-attack").textContent = `${Math.round(adsrParams.attack * 1000)} ms`;
+        });
+    }
+    if (document.getElementById("slider-adsr-decay")) {
+        document.getElementById("slider-adsr-decay").addEventListener("input", (e) => {
+            adsrParams.decay = parseFloat(e.target.value);
+            if (document.getElementById("val-adsr-decay")) document.getElementById("val-adsr-decay").textContent = `${Math.round(adsrParams.decay * 1000)} ms`;
+        });
+    }
+    if (document.getElementById("slider-adsr-sustain")) {
+        document.getElementById("slider-adsr-sustain").addEventListener("input", (e) => {
+            adsrParams.sustain = parseFloat(e.target.value);
+            if (document.getElementById("val-adsr-sustain")) document.getElementById("val-adsr-sustain").textContent = `${Math.round(adsrParams.sustain * 100)} %`;
+        });
+    }
+    if (document.getElementById("slider-adsr-release")) {
+        document.getElementById("slider-adsr-release").addEventListener("input", (e) => {
+            adsrParams.release = parseFloat(e.target.value);
+            if (document.getElementById("val-adsr-release")) document.getElementById("val-adsr-release").textContent = `${Math.round(adsrParams.release * 1000)} ms`;
         });
     }
 
