@@ -1,16 +1,6 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - FLAGSHIP HIGH-FIDELITY & VISUAL SPECTACLE v8.0
- * ============================================================================
- * Features:
- *  1. Dual-Oscillator Stereo Chorus & Sub-Bass Foundation Layer
- *  2. Analog Soft-Clipping Tube Saturator (WaveShaper Distortion Curve)
- *  3. Generative 3D Audio-Reactive Visualizer Spectacle Engine:
- *      - 🌌 Quantum Hyperspace 3D Starfield Warp
- *      - 🔮 Generative Audio-Reactive Kaleidoscope Polygons
- *      - ⚡ Trigonometric Neon Aurora Wave Lasers
- *      - 💥 Kinetic Particle Bursts & Comet Shockwaves
- *  4. 🎲 Chaos / Dynamic Procedural Art Auto-Mutation Engine
+ * AURASYNTH PRO VST3 ULTIMATE - FLAGSHIP FIXES & GRAPHICAL TILES v8.1
  * ============================================================================
  */
 
@@ -18,7 +8,7 @@
 let audioCtx = null;
 let masterGain = null;
 let compressorNode = null;
-let tubeSaturatorNode = null; // Analog Soft-Clipping Saturator
+let tubeSaturatorNode = null;
 let stereoPanner = null;
 let filterNode = null;
 
@@ -40,7 +30,7 @@ let isSpectralFrozen = false;
 let scopeMode = "wave";
 
 // GENERATIVE VISUAL SPECTACLE ENGINE STATE
-let envTheme = "warp"; // "warp", "polygons", "aurora", "burst"
+let envTheme = "warp";
 const ENV_THEMES_LIST = ["warp", "polygons", "aurora", "burst"];
 let envThemeIndex = 0;
 
@@ -168,10 +158,10 @@ const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", 
 const WAVETABLE_HARMONICS = {
     violin: [0, 1.0, 0.85, 0.6, 0.45, 0.3, 0.2, 0.1, 0.05],
     cs80:   [0, 1.0, 0.9, 0.7, 0.5, 0.4, 0.3, 0.25, 0.2],
-    rhodes: [0, 1.0, 0.2, 0.7, 0.1, 0.3, 0.05, 0.1],
-    guitar: [0, 1.0, 0.95, 0.8, 0.7, 0.6, 0.5, 0.4],
-    brass:  [0, 1.0, 0.9, 0.85, 0.75, 0.5, 0.3, 0.2],
-    choir:  [0, 1.0, 0.3, 0.6, 0.1, 0.4, 0.05, 0.2]
+    rhodes: [0, 1.0, 0.15, 0.6, 0.05, 0.3, 0.02, 0.1],
+    guitar: [0, 1.0, 0.95, 0.3, 0.8, 0.2, 0.5, 0.1],
+    brass:  [0, 1.0, 0.95, 0.9, 0.85, 0.75, 0.5, 0.3],
+    choir:  [0, 1.0, 0.2, 0.8, 0.1, 0.5, 0.05, 0.3]
 };
 
 // ============================================================================
@@ -273,7 +263,7 @@ function toggleChaosArtMode() {
 }
 
 // ============================================================================
-// 3. HIGH-FIDELITY STUDIO DSP AUDIO ENGINE (TUBE SATURATOR & SUB-BASS)
+// 3. HIGH-FIDELITY STUDIO DSP AUDIO ENGINE
 // ============================================================================
 function makeDistortionCurve(amount) {
     const k = typeof amount === 'number' ? amount : 20;
@@ -304,6 +294,29 @@ function getOrCreateWavetable(presetKey) {
     return wave;
 }
 
+function switchInstrumentPreset(newPresetKey) {
+    currentPreset = newPresetKey;
+    console.log(`[PRESET SWITCH] Switched to: ${currentPreset}`);
+
+    if (audioCtx && isAudioRunning) {
+        const newWave = getOrCreateWavetable(currentPreset);
+        activeVoices.forEach(voice => {
+            if (voice.oscillators) {
+                // Update main & chorus oscillators with new wavetable
+                try { voice.oscillators[0].setPeriodicWave(newWave); } catch(e){}
+                try { voice.oscillators[1].setPeriodicWave(newWave); } catch(e){}
+            }
+        });
+
+        // Trigger chord update if notes are active
+        if (currentChordIndex >= 0) {
+            const idx = currentChordIndex;
+            currentChordIndex = -1;
+            triggerChordTransition(idx);
+        }
+    }
+}
+
 function initAudioEngine() {
     if (audioCtx) {
         if (audioCtx.state === "suspended") {
@@ -318,9 +331,8 @@ function initAudioEngine() {
     masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
 
-    // Soft-Clipping Tube Saturator Waveshaper
     tubeSaturatorNode = audioCtx.createWaveShaper();
-    tubeSaturatorNode.curve = makeDistortionCurve(8); // Subtle analog tube warmth
+    tubeSaturatorNode.curve = makeDistortionCurve(8);
     tubeSaturatorNode.oversample = '4x';
 
     compressorNode = audioCtx.createDynamicsCompressor();
@@ -374,7 +386,6 @@ function initAudioEngine() {
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
 
-    // Routing Chain: Filter -> EQ -> Panner -> Tube Saturator -> Compressor -> Master
     filterNode.connect(eqBassNode);
     eqBassNode.connect(eqMidNode);
     eqMidNode.connect(eqTrebleNode);
@@ -493,7 +504,7 @@ function loadPresetFromStorage() {
     const saved = localStorage.getItem("aurasynth_preset");
     if (saved) {
         const data = JSON.parse(saved);
-        currentPreset = data.preset || "violin";
+        switchInstrumentPreset(data.preset || "violin");
         currentKey = data.key || "C";
         currentScaleMode = data.scale || "major";
         currentOctaveShift = data.octave || 0;
@@ -605,17 +616,14 @@ function triggerChordTransition(fingerCount) {
             voiceGain.gain.setValueAtTime(0.0001, now);
             voiceGain.gain.setTargetAtTime(0.22 / numVoicesNeeded, now, 0.12);
 
-            // Main Oscillator
             const osc1 = audioCtx.createOscillator();
             osc1.setPeriodicWave(customWave);
             osc1.frequency.setValueAtTime(freq, now);
 
-            // Stereo Detuned Chorus Oscillator (+6 Cents)
             const osc2 = audioCtx.createOscillator();
             osc2.setPeriodicWave(customWave);
             osc2.frequency.setValueAtTime(freq * 1.0035, now);
 
-            // Sub-Bass Oscillator (-1 Octave Sine)
             const oscSub = audioCtx.createOscillator();
             oscSub.type = "sine";
             oscSub.frequency.setValueAtTime(freq * 0.5, now);
@@ -966,7 +974,7 @@ function processRightHandExpression(landmarks) {
 }
 
 // ============================================================================
-// 6. GENERATIVE 3D AUDIO-REACTIVE VISUAL ENGINE (HIGH-ART PROCEDURAL CANVAS)
+// 6. GENERATIVE 3D AUDIO-REACTIVE VISUAL ENGINE
 // ============================================================================
 function initBackgroundEnvironmentEngine() {
     const bgCanvas = document.getElementById("reactive-bg-canvas");
@@ -980,7 +988,6 @@ function initBackgroundEnvironmentEngine() {
     resizeBg();
     window.addEventListener("resize", resizeBg);
 
-    // Initialize 3D Warp Stars
     bgStars = [];
     for (let i = 0; i < NUM_WARP_STARS; i++) {
         bgStars.push({
@@ -991,7 +998,6 @@ function initBackgroundEnvironmentEngine() {
         });
     }
 
-    // Initialize Kinetic Particles
     bgParticles = [];
     for (let i = 0; i < NUM_BG_PARTICLES; i++) {
         bgParticles.push({
@@ -1031,7 +1037,6 @@ function initBackgroundEnvironmentEngine() {
 
         polygonRotationAngle += 0.008 + avgEnergy * 0.03;
 
-        // MODE 1: QUANTUM 3D WARP
         if (envTheme === "warp") {
             const speed = 3 + avgEnergy * 25;
             ctx.strokeStyle = `hsla(${190 + chaosHueOffset + avgEnergy * 80}, 100%, 65%, 0.7)`;
@@ -1063,9 +1068,7 @@ function initBackgroundEnvironmentEngine() {
                     ctx.stroke();
                 }
             });
-        }
-        // MODE 2: CRYSTALLINE POLYGONS
-        else if (envTheme === "polygons") {
+        } else if (envTheme === "polygons") {
             const numSides = isChaosArtMode ? 5 + Math.floor(avgEnergy * 4) : 6;
             const radius = 100 + bassEnergy * 180;
             ctx.save();
@@ -1088,9 +1091,7 @@ function initBackgroundEnvironmentEngine() {
                 ctx.stroke();
             }
             ctx.restore();
-        }
-        // MODE 3: NEON AURORA SINE WAVES
-        else if (envTheme === "aurora") {
+        } else if (envTheme === "aurora") {
             ctx.lineWidth = 3;
             for (let wave = 0; wave < 3; wave++) {
                 ctx.beginPath();
@@ -1102,9 +1103,7 @@ function initBackgroundEnvironmentEngine() {
                 }
                 ctx.stroke();
             }
-        }
-        // MODE 4: KINETIC PARTICLE BURST
-        else {
+        } else {
             bgParticles.forEach(p => {
                 p.x += p.vx * (1.0 + avgEnergy * 3.5);
                 p.y += p.vy * (1.0 + avgEnergy * 3.5);
@@ -1124,7 +1123,6 @@ function initBackgroundEnvironmentEngine() {
             });
         }
 
-        // Draw Shockwave Pulses on Every Chord Transition
         for (let s = bgShockwaves.length - 1; s >= 0; s--) {
             const shock = bgShockwaves[s];
             ctx.beginPath();
@@ -1374,6 +1372,20 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
     }
 
+    // PRESET PILL CLICK LISTENER (INSTANT REAL-TIME INSTRUMENT SWITCHING)
+    document.querySelectorAll(".preset-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+            document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+
+            const newPreset = pill.getAttribute("data-preset");
+            switchInstrumentPreset(newPreset);
+
+            const sel = document.getElementById("preset-select");
+            if (sel) sel.value = newPreset;
+        });
+    });
+
     document.querySelectorAll(".rack-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".rack-tab-btn").forEach(b => b.classList.remove("active"));
@@ -1383,23 +1395,6 @@ window.addEventListener("DOMContentLoaded", () => {
             const targetTab = btn.getAttribute("data-tab");
             const panel = document.getElementById(targetTab);
             if (panel) panel.classList.add("active");
-        });
-    });
-
-    document.querySelectorAll(".preset-pill").forEach(pill => {
-        pill.addEventListener("click", () => {
-            document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
-            pill.classList.add("active");
-
-            currentPreset = pill.getAttribute("data-preset");
-            const sel = document.getElementById("preset-select");
-            if (sel) sel.value = currentPreset;
-
-            if (currentChordIndex >= 0) {
-                const idx = currentChordIndex;
-                currentChordIndex = -1;
-                triggerChordTransition(idx);
-            }
         });
     });
 
