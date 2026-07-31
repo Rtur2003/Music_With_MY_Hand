@@ -1,12 +1,6 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - AUDIO-REACTIVE ENVIRONMENT ENGINE (CYCLE 4)
- * ============================================================================
- * Visual Spectacle Architecture:
- *  - Fullscreen Audio-Reactive Particle Nebula Canvas (#reactive-bg-canvas)
- *  - Real-Time Frequency Spectrum & Gesture Modulated Particle Dynamics
- *  - 4 Dynamic Themes: Cyberpunk Stage, Symphony Hall, Cosmos Nebula, Plasma Matrix
- *  - Burst Shockwave Pulses on Gesture Chord Transitions
+ * AURASYNTH PRO VST3 ENGINE - LISSAJOUS STEREO SCOPE & CYCLE 5 ENHANCEMENTS
  * ============================================================================
  */
 
@@ -28,8 +22,11 @@ let delayGain = null;
 let subOscGain = null;
 let analyserNode = null;
 
+// Scope Mode State
+let scopeMode = "wave"; // "wave", "spectrum", "lissajous"
+
 // Environment Visual Engine State
-let envTheme = "cyberpunk"; // "cyberpunk", "symphony", "cosmos", "plasma"
+let envTheme = "cyberpunk";
 let bgParticles = [];
 let bgShockwaves = [];
 const NUM_BG_PARTICLES = 120;
@@ -371,7 +368,6 @@ function triggerChordTransition(fingerCount) {
     updateChordUI(fingerCount, chordData);
     sendMidiChordNotes(chordData.midiNotes);
 
-    // Trigger Shockwave in Background Environment
     if (fingerCount > 0) {
         bgShockwaves.push({
             x: window.innerWidth / 2,
@@ -748,7 +744,6 @@ function initBackgroundEnvironmentEngine() {
     resizeBg();
     window.addEventListener("resize", resizeBg);
 
-    // Initialize Particles
     bgParticles = [];
     for (let i = 0; i < NUM_BG_PARTICLES; i++) {
         bgParticles.push({
@@ -780,7 +775,6 @@ function initBackgroundEnvironmentEngine() {
         ctx.fillStyle = "rgba(11, 13, 19, 0.25)";
         ctx.fillRect(0, 0, w, h);
 
-        // Draw Shockwaves
         for (let s = bgShockwaves.length - 1; s >= 0; s--) {
             const shock = bgShockwaves[s];
             ctx.beginPath();
@@ -799,7 +793,6 @@ function initBackgroundEnvironmentEngine() {
             }
         }
 
-        // Draw Audio-Reactive Particles
         bgParticles.forEach(p => {
             p.x += p.vx * (1.0 + avgEnergy * 3.0);
             p.y += p.vy * (1.0 + avgEnergy * 3.0);
@@ -835,7 +828,7 @@ function initBackgroundEnvironmentEngine() {
 }
 
 // ============================================================================
-// 6. MEDIAPIPE TRACKING & VISUALIZER
+// 6. MEDIAPIPE TRACKING & MULTI-MODE VISUALIZER (LISSAJOUS PHASE SCOPE)
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -963,55 +956,71 @@ function startVisualizer() {
         ctx.fillStyle = "#080a0e";
         ctx.fillRect(0, 0, w, h);
 
+        // Grid Lines
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
         ctx.lineWidth = 1;
-
         for (let x = 0; x < w; x += 35) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, h);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
         }
         for (let y = 0; y < h; y += 20) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        if (scopeMode === "spectrum") {
+            // FFT Spectrum Bars
+            const barWidth = (w / bufferLength) * 2.5;
+            let barX = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (freqData[i] / 255.0) * h * 0.85;
+                ctx.fillStyle = `hsl(${(i / bufferLength) * 280}, 100%, 60%)`;
+                ctx.fillRect(barX, h - barHeight, barWidth, barHeight);
+                barX += barWidth + 1;
+            }
+        } else if (scopeMode === "lissajous") {
+            // Stereo Phase Lissajous Vector Circle Scope
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(w, h) * 0.38;
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#ffcc00";
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#ffcc00";
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(w, y);
+
+            for (let i = 0; i < bufferLength; i++) {
+                const sampleL = (timeData[i] - 128) / 128.0;
+                const sampleR = (timeData[(i + 32) % bufferLength] - 128) / 128.0;
+
+                const posX = centerX + sampleL * radius;
+                const posY = centerY - sampleR * radius;
+
+                if (i === 0) ctx.moveTo(posX, posY);
+                else ctx.lineTo(posX, posY);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        } else {
+            // Standard Oscilloscope Waveform
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#00c3ff";
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = "#00c3ff";
+            ctx.beginPath();
+
+            const sliceWidth = w * 1.0 / bufferLength;
+            let x = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const v = timeData[i] / 128.0;
+                const y = (v * h) / 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            ctx.lineTo(w, h / 2);
             ctx.stroke();
         }
 
-        const barWidth = (w / bufferLength) * 2.5;
-        let barX = 0;
-        ctx.fillStyle = "rgba(255, 204, 0, 0.15)";
-        for (let i = 0; i < bufferLength; i++) {
-            const barHeight = (freqData[i] / 255.0) * h * 0.7;
-            ctx.fillRect(barX, h - barHeight, barWidth, barHeight);
-            barX += barWidth + 1;
-        }
-
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#00c3ff";
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = "#00c3ff";
-        ctx.beginPath();
-
-        const sliceWidth = w * 1.0 / bufferLength;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-            const v = timeData[i] / 128.0;
-            const y = (v * h) / 2;
-
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-
-            x += sliceWidth;
-        }
-
-        ctx.lineTo(w, h / 2);
-        ctx.stroke();
         ctx.restore();
     }
 
@@ -1070,7 +1079,10 @@ window.addEventListener("DOMContentLoaded", () => {
         initAudioEngine();
     });
 
-    // Theme Selector Listener
+    document.getElementById("scope-mode-select").addEventListener("change", (e) => {
+        scopeMode = e.target.value;
+    });
+
     document.getElementById("env-theme-select").addEventListener("change", (e) => {
         envTheme = e.target.value;
         const bar = document.getElementById("midi-status-bar");
