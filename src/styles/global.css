@@ -453,7 +453,7 @@ html, body, #root, .app-root {
 /* ── Conductor Center Display ────────────────────────────── */
 .conductor-center-display {
   position: absolute;
-  top: 45%;
+  top: 42%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
@@ -563,8 +563,17 @@ html, body, #root, .app-root {
   transform: translateX(-50%);
   z-index: 10;
   width: 90%;
-  max-width: 600px;
+  max-width: 650px;
   pointer-events: none;
+}
+
+.orchestra-section-desc {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
 }
 
 .orchestra-arc {
@@ -575,23 +584,34 @@ html, body, #root, .app-root {
 
 .orchestra-section {
   padding: 0.75rem 0.5rem;
-  background: rgba(15, 15, 30, 0.6);
+  background: rgba(15, 15, 30, 0.7);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
   backdrop-filter: blur(10px);
   transition: all var(--transition-fast);
 }
 
+.orchestra-section__icon {
+  font-size: 1.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.orchestra-section__name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .orchestra-section.active {
-  color: var(--text-primary);
   border-color: var(--accent-cyan);
-  background: rgba(0, 255, 204, 0.1);
-  box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+  background: rgba(0, 255, 204, 0.12);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+}
+
+.orchestra-section.active .orchestra-section__name {
+  color: var(--text-primary);
 }
 
 .orchestra-section.dimmed {
@@ -600,7 +620,7 @@ html, body, #root, .app-root {
 
 .orchestra-section.pulse {
   transform: scale(1.06);
-  box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
+  box-shadow: 0 0 35px rgba(0, 255, 204, 0.4);
 }
 
 .loading-text {
