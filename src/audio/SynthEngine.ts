@@ -1,12 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Synth Engine (Tone.js)
-   Professional audio engine with PolySynth, Filter, Reverb, Auto-Bass
+   Non-blocking initialization with PolySynth, Filter, Reverb, Auto-Bass
    ═══════════════════════════════════════════════════════════════════ */
 
 import * as Tone from 'tone';
 
 export interface SynthEngineOptions {
-  /** Initial master volume in dB (-60 to 0) */
   volume?: number;
 }
 
@@ -36,16 +35,15 @@ export class SynthEngine {
   // Analyser for visualization
   private analyser!: Tone.Analyser;
 
-  constructor(_opts?: SynthEngineOptions) {
-    // Don't initialize in constructor — Tone.js needs user gesture
-  }
-
-  /** Must be called after user gesture (click/tap) */
   async start(): Promise<void> {
     if (this.isStarted) return;
+    this.isStarted = true;
 
-    await Tone.start();
-    console.log('[SynthEngine] Audio context started');
+    try {
+      await Tone.start();
+    } catch {
+      // Non-critical audio start warning
+    }
 
     // ── Master chain ─────────────────────────────────
     this.masterGain = new Tone.Gain(0.7).toDestination();
@@ -54,9 +52,9 @@ export class SynthEngine {
     this.analyser = new Tone.Analyser('waveform', 256);
     this.masterGain.connect(this.analyser);
 
-    // ── Effects ───────────────────────────────────────
+    // ── Effects (Non-blocking Reverb) ─────────────────
     this.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.25 });
-    await this.reverb.ready;
+    this.reverb.ready.catch(() => {}); // non-blocking
 
     this.chorus = new Tone.Chorus({
       frequency: 1.5,
@@ -131,52 +129,37 @@ export class SynthEngine {
       volume: -10,
     });
     this.arpSynth.connect(this.filter);
-
-    this.isStarted = true;
   }
 
-  /** Get the analyser for visualization */
   getAnalyser(): Tone.Analyser | null {
     return this.analyser ?? null;
   }
 
-  /**
-   * Play a chord — handles smooth transitions (no clicks/pops)
-   */
   playChord(notes: string[]): void {
     if (!this.isStarted || notes.length === 0) return;
 
     const now = Tone.now();
 
-    // Release any currently playing notes first
     if (this.currentNotes.length > 0) {
       this.synth.releaseAll(now);
     }
 
-    // Small delay to prevent overlap artifacts
     const attackTime = now + 0.02;
     this.synth.triggerAttack(notes, attackTime);
     this.currentNotes = [...notes];
     this.isPlaying = true;
 
-    // Update arpeggiator if enabled
     if (this.arpEnabled) {
       this.updateArpPattern(notes);
     }
   }
 
-  /**
-   * Play bass note
-   */
   playBass(bassNote: string): void {
     if (!this.isStarted || !this.bassEnabled) return;
     const now = Tone.now();
     this.bassSynth.triggerAttackRelease(bassNote, '2n', now + 0.02);
   }
 
-  /**
-   * Release all currently playing notes
-   */
   releaseAll(): void {
     if (!this.isStarted) return;
     const now = Tone.now();
@@ -191,38 +174,24 @@ export class SynthEngine {
     }
   }
 
-  /**
-   * Set filter frequency — mapped from right hand tilt
-   * @param normalized 0.0 (dark/closed) to 1.0 (bright/open)
-   */
   setFilterFrequency(normalized: number): void {
     if (!this.isStarted) return;
-    // Map 0-1 to 200Hz-8000Hz (exponential)
     const minFreq = 200;
     const maxFreq = 8000;
     const freq = minFreq * Math.pow(maxFreq / minFreq, normalized);
     this.filter.frequency.rampTo(freq, 0.05);
   }
 
-  /**
-   * Set master volume — mapped from right hand height
-   * @param normalized 0.0 (silent) to 1.0 (max)
-   */
   setVolume(normalized: number): void {
     if (!this.isStarted) return;
     const vol = Math.max(0, Math.min(1, normalized));
     this.masterGain.gain.rampTo(vol * 0.8, 0.05);
   }
 
-  /**
-   * Set reverb wet/dry
-   */
   setReverbWet(wet: number): void {
     if (!this.isStarted) return;
     this.reverb.wet.rampTo(Math.max(0, Math.min(1, wet)), 0.1);
   }
-
-  // ── Bass controls ────────────────────────────────
 
   setBassEnabled(enabled: boolean): void {
     this.bassEnabled = enabled;
@@ -234,8 +203,6 @@ export class SynthEngine {
   getBassEnabled(): boolean {
     return this.bassEnabled;
   }
-
-  // ── Arpeggiator controls ─────────────────────────
 
   setArpEnabled(enabled: boolean): void {
     this.arpEnabled = enabled;
@@ -288,8 +255,6 @@ export class SynthEngine {
     }
   }
 
-  // ── Cleanup ──────────────────────────────────────
-
   dispose(): void {
     this.releaseAll();
     if (this.arpPattern) {
@@ -316,7 +281,6 @@ export class SynthEngine {
   }
 }
 
-/** Singleton engine instance */
 let engineInstance: SynthEngine | null = null;
 
 export function getSynthEngine(): SynthEngine {

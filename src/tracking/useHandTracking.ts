@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — useHandTracking React Hook
-   Fixes "Video element not found" by waiting for enabled flag & DOM element
+   Fixes MediaPipe WebGL WASM freeze by checking video dimensions (videoWidth/videoHeight)
+   and providing strictly monotonic timestamps to detectForVideo
    ═══════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef, useState } from 'react';
@@ -28,12 +29,11 @@ export function useHandTracking(
   const handsRef = useRef<TrackedHands>({ left: null, right: null });
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const rafRef = useRef(0);
-  const lastVideoTimeRef = useRef(-1);
+  const lastTimestampRef = useRef(-1);
 
   const [handsState, setHandsState] = useState<TrackedHands>({ left: null, right: null });
 
   useEffect(() => {
-    // Only initialize camera and AI model after user clicks start and video element exists
     if (!enabled) return;
 
     let cancelled = false;
@@ -50,8 +50,7 @@ export function useHandTracking(
 
         const video = videoRef.current;
         if (!video) {
-          // Wait a short moment if video element is mounting
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 150));
         }
 
         const targetVideo = videoRef.current;
@@ -100,36 +99,46 @@ export function useHandTracking(
           if (cancelled) return;
           const v = videoRef.current;
           const lm = landmarkerRef.current;
-          if (!v || !lm || v.readyState < 2) {
+
+          // Crucial fix: Ensure video has valid readyState and non-zero dimensions
+          // Prevents MediaPipe NORM_RECT without IMAGE_DIMENSIONS WASM WebGL freeze
+          if (!v || !lm || v.readyState < 2 || v.videoWidth === 0 || v.videoHeight === 0) {
             rafRef.current = requestAnimationFrame(detect);
             return;
           }
 
-          if (v.currentTime !== lastVideoTimeRef.current) {
-            lastVideoTimeRef.current = v.currentTime;
-            const result = lm.detectForVideo(v, performance.now());
+          // Use video.currentTime in milliseconds as strictly monotonic timestamp
+          const nowMs = Math.round(v.currentTime * 1000);
+          if (nowMs > lastTimestampRef.current && nowMs > 0) {
+            lastTimestampRef.current = nowMs;
 
-            let left: Landmark[] | null = null;
-            let right: Landmark[] | null = null;
+            try {
+              const result = lm.detectForVideo(v, nowMs);
 
-            if (result.landmarks && result.handedness) {
-              for (let i = 0; i < result.landmarks.length; i++) {
-                const landmarks = result.landmarks[i] as Landmark[];
-                const label = result.handedness[i]?.[0]?.categoryName;
+              let left: Landmark[] | null = null;
+              let right: Landmark[] | null = null;
 
-                // MediaPipe labels mirrored in selfie view:
-                // "Right" label = user's LEFT hand
-                if (label === 'Right') {
-                  left = landmarks;
-                } else if (label === 'Left') {
-                  right = landmarks;
+              if (result.landmarks && result.handedness) {
+                for (let i = 0; i < result.landmarks.length; i++) {
+                  const landmarks = result.landmarks[i] as Landmark[];
+                  const label = result.handedness[i]?.[0]?.categoryName;
+
+                  // MediaPipe labels mirrored in selfie view:
+                  // "Right" label = user's LEFT hand
+                  if (label === 'Right') {
+                    left = landmarks;
+                  } else if (label === 'Left') {
+                    right = landmarks;
+                  }
                 }
               }
-            }
 
-            const nextHands = { left, right };
-            handsRef.current = nextHands;
-            setHandsState(nextHands);
+              const nextHands = { left, right };
+              handsRef.current = nextHands;
+              setHandsState(nextHands);
+            } catch (err) {
+              console.warn('[HandTracker] Detection skipped frame:', err);
+            }
           }
 
           rafRef.current = requestAnimationFrame(detect);

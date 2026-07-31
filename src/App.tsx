@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Main App Component
-   Clean single video element ref passing to active mode Stage
+   Instant start sequence without blocking AudioContext initialization
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useRef, useState } from 'react';
@@ -18,7 +18,7 @@ export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Hand tracking hook
+  // Initialize hand tracking once user clicks start
   const { status, error, handsState } = useHandTracking(videoRef, hasStarted);
 
   const [mode, setMode] = useState<AppMode>('synth');
@@ -31,15 +31,19 @@ export default function App() {
   const [isMinorLocked, setIsMinorLocked] = useState(false);
   const recordedNotesRef = useRef<RecordedNote[]>([]);
 
-  const handleStart = async () => {
-    try {
-      await getSynthEngine().start();
-      await getOrchestraEngine().start();
-      setHasStarted(true);
-    } catch (err) {
-      console.error('Audio start error:', err);
-      setHasStarted(true);
-    }
+  const handleStart = () => {
+    // Open UI immediately so page never hangs on splash screen
+    setHasStarted(true);
+
+    // Initialize audio engines asynchronously
+    setTimeout(async () => {
+      try {
+        await getSynthEngine().start();
+        await getOrchestraEngine().start();
+      } catch (err) {
+        console.warn('[AudioStart] Non-critical audio init warning:', err);
+      }
+    }, 50);
   };
 
   const handleArpToggle = () => {
