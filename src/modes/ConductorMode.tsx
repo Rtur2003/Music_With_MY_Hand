@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Conductor Mode Component
-   Orchestra Conducting mode (Fixes freeze by shallow state equality check)
+   Orchestra Conducting mode (Fixes visual overlap with orchestra visualizer)
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -61,13 +61,12 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
     const timestamp = performance.now();
     const state = conductorProcessorRef.current.process(leftHand, rightHand, timestamp);
 
-    // Apply audio controls to Tone.js engine directly (high performance, no React re-render needed)
+    // Apply audio controls to Tone.js engine directly
     orchestraEngine.setBpm(state.bpm);
     orchestraEngine.setDynamics(state.dynamics);
     orchestraEngine.setSectionFocus(state.sectionFocus);
 
     // ONLY trigger React re-render when UI state properties actually change!
-    // Prevents infinite re-render loop that causes browser freeze!
     setConductorState((prev) => {
       const bpmChanged = prev.bpm !== state.bpm;
       const dynamicsChanged = Math.abs(prev.dynamics - state.dynamics) > 0.08;
@@ -77,7 +76,7 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
       const dimChanged = prev.diminuendo !== state.diminuendo;
 
       if (!bpmChanged && !dynamicsChanged && !focusChanged && !beatChanged && !crescChanged && !dimChanged) {
-        return prev; // Same state reference -> React skips re-render!
+        return prev;
       }
 
       return state;
@@ -91,6 +90,7 @@ export const ConductorMode: React.FC<ConductorModeProps> = ({ videoRef, leftHand
       leftHand={leftHand}
       rightHand={rightHand}
       chordColor="#ffaa00"
+      showHandIndicators={false}
     >
       <ConductorHud
         conductorState={conductorState}

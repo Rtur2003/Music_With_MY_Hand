@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Main App Component
-   Persistent video element and clean start sequence
+   Clean single video element ref passing to active mode Stage
    ═══════════════════════════════════════════════════════════════════ */
 
 import React, { useRef, useState } from 'react';
@@ -18,7 +18,7 @@ export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Initialize hand tracking ONLY when user clicks start (hasStarted = true)
+  // Hand tracking hook
   const { status, error, handsState } = useHandTracking(videoRef, hasStarted);
 
   const [mode, setMode] = useState<AppMode>('synth');
@@ -72,21 +72,6 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {/* Persistent hidden video element for MediaPipe camera feed */}
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          opacity: 0,
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      />
-
       {!hasStarted ? (
         <div className="splash">
           <div className="splash__title">AuraSynth Pro</div>
