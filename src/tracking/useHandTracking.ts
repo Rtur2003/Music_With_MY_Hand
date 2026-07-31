@@ -1,9 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — useHandTracking React Hook
-   Based on Ekmand/music-synth pattern with @mediapipe/tasks-vision
+   Uses @mediapipe/tasks-vision npm package directly
    ═══════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useRef, useState } from 'react';
+import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
 export type Landmark = { x: number; y: number; z: number };
 export type Handedness = 'Left' | 'Right';
@@ -15,21 +16,19 @@ export interface TrackedHands {
 
 export type HandTrackingStatus = 'idle' | 'requesting' | 'loading' | 'ready' | 'error';
 
-// CDN URLs for MediaPipe tasks-vision WASM runtime + model
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
 const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 
-/**
- * React hook that manages webcam + MediaPipe hand tracking
- * Returns status, error, and a ref to the latest hand data
- */
 export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | null>) {
   const [status, setStatus] = useState<HandTrackingStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const handsRef = useRef<TrackedHands>({ left: null, right: null });
-  const landmarkerRef = useRef<any>(null);
+  const landmarkerRef = useRef<HandLandmarker | null>(null);
   const rafRef = useRef(0);
   const lastVideoTimeRef = useRef(-1);
+
+  // State to trigger React re-renders for components that need active hand data
+  const [handsState, setHandsState] = useState<TrackedHands>({ left: null, right: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -44,12 +43,14 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
           throw new Error('Camera API unavailable in this browser');
         }
 
-        // Request camera
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
           audio: false,
         });
-        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
         activeStream = stream;
 
         const video = videoRef.current;
@@ -59,15 +60,6 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
 
         setStatus('loading');
 
-        // Dynamically import MediaPipe tasks-vision
-        const vision = await import(
-          /* @vite-ignore */
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs'
-        );
-
-        if (cancelled) return;
-
-        const { FilesetResolver, HandLandmarker } = vision;
         const filesetResolver = await FilesetResolver.forVisionTasks(WASM_URL);
 
         const landmarker = await HandLandmarker.createFromOptions(filesetResolver, {
@@ -82,11 +74,13 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
           minTrackingConfidence: 0.5,
         });
 
-        if (cancelled) { landmarker.close(); return; }
+        if (cancelled) {
+          landmarker.close();
+          return;
+        }
         landmarkerRef.current = landmarker;
         setStatus('ready');
 
-        // Start detection loop
         function detect() {
           if (cancelled) return;
           const v = videoRef.current;
@@ -108,7 +102,7 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
                 const landmarks = result.landmarks[i] as Landmark[];
                 const label = result.handedness[i]?.[0]?.categoryName;
 
-                // MediaPipe labels are mirrored in selfie view:
+                // MediaPipe labels mirrored in selfie view:
                 // "Right" label = user's LEFT hand
                 if (label === 'Right') {
                   left = landmarks;
@@ -118,7 +112,9 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
               }
             }
 
-            handsRef.current = { left, right };
+            const nextHands = { left, right };
+            handsRef.current = nextHands;
+            setHandsState(nextHands);
           }
 
           rafRef.current = requestAnimationFrame(detect);
@@ -145,5 +141,5 @@ export function useHandTracking(videoRef: React.RefObject<HTMLVideoElement | nul
     };
   }, [videoRef]);
 
-  return { status, error, handsRef };
+  return { status, error, handsRef, handsState };
 }

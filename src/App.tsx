@@ -14,7 +14,7 @@ export type AppMode = 'synth' | 'conductor';
 
 export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const { status, error, handsRef } = useHandTracking(videoRef);
+  const { status, error, handsState } = useHandTracking(videoRef);
 
   const [mode, setMode] = useState<AppMode>('synth');
   const [hasStarted, setHasStarted] = useState(false);
@@ -30,7 +30,7 @@ export default function App() {
     }
   };
 
-  const { left, right } = handsRef.current;
+  const { left, right } = handsState;
 
   return (
     <div className="app-root">
