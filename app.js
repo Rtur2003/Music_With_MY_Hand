@@ -1,6 +1,12 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ENGINE - MODULAR RACK TABBED ENGINE (v7.0)
+ * AURASYNTH PRO VST3 ENGINE - HARDWARE OPTIMIZED 60 FPS ENGINE (v7.1)
+ * ============================================================================
+ * Performance Fixes:
+ *  1. Non-blocking MediaPipe Camera Frame Guard (isProcessingFrame)
+ *  2. Removed CPU-intensive Canvas shadowBlur in particle renderer
+ *  3. Optimized background particle loop (60 lightweight particles)
+ *  4. Dedicated Window Resize Listener (Zero Reflow in Animation Loop)
  * ============================================================================
  */
 
@@ -28,11 +34,14 @@ let isSpectralFrozen = false;
 // Scope Mode State
 let scopeMode = "wave"; // "wave", "spectrum", "lissajous"
 
-// Environment Visual Engine State
+// Environment Visual Engine State (Optimized)
 let envTheme = "cyberpunk";
 let bgParticles = [];
 let bgShockwaves = [];
-const NUM_BG_PARTICLES = 120;
+const NUM_BG_PARTICLES = 60; // Lightweight 60 FPS particle count
+
+// Camera Processing Frame Guard
+let isProcessingFrame = false;
 
 // Metronome Engine State
 let isMetronomeActive = false;
@@ -311,7 +320,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] Modular Modular Engine Ready.");
+    console.log("[AuraSynth PRO] Audio Engine Optimized.");
 }
 
 function midiToFreq(midi) {
@@ -357,11 +366,15 @@ function toggleSpectralFreeze() {
     isSpectralFrozen = !isSpectralFrozen;
     const btn = document.getElementById("btn-freeze-toggle");
     if (isSpectralFrozen) {
-        btn.classList.add("frozen");
-        btn.textContent = "❄️ FROZEN DRONE (ACTIVE)";
+        if (btn) {
+            btn.classList.add("frozen");
+            btn.textContent = "❄️ FROZEN DRONE (ACTIVE)";
+        }
     } else {
-        btn.classList.remove("frozen");
-        btn.textContent = "❄️ FREEZE DRONE";
+        if (btn) {
+            btn.classList.remove("frozen");
+            btn.textContent = "❄️ FREEZE DRONE";
+        }
     }
 }
 
@@ -424,7 +437,7 @@ function loadPresetFromStorage() {
             if (eqBassNode && audioCtx) eqBassNode.gain.setValueAtTime(parseFloat(data.eqBass || 0), audioCtx.currentTime);
         }
 
-        console.log("[PRESET STORAGE] Preset Loaded Successfully.");
+        console.log("[PRESET STORAGE] Loaded.");
     }
 }
 
@@ -825,7 +838,7 @@ function processRightHandExpression(landmarks) {
 }
 
 // ============================================================================
-// 5. AUDIO-REACTIVE BACKGROUND ENVIRONMENT ENGINE
+// 5. AUDIO-REACTIVE BACKGROUND ENGINE (LIGHTWEIGHT 60 FPS - ZERO SHADOWBLUR)
 // ============================================================================
 function initBackgroundEnvironmentEngine() {
     const bgCanvas = document.getElementById("reactive-bg-canvas");
@@ -846,8 +859,7 @@ function initBackgroundEnvironmentEngine() {
             y: Math.random() * window.innerHeight,
             radius: Math.random() * 3 + 1,
             vx: (Math.random() - 0.5) * 0.8,
-            vy: (Math.random() - 0.5) * 0.8,
-            baseHue: Math.random() * 60 + 180
+            vy: (Math.random() - 0.5) * 0.8
         });
     }
 
@@ -870,6 +882,7 @@ function initBackgroundEnvironmentEngine() {
         ctx.fillStyle = "rgba(11, 13, 19, 0.25)";
         ctx.fillRect(0, 0, w, h);
 
+        // Draw Shockwaves
         for (let s = bgShockwaves.length - 1; s >= 0; s--) {
             const shock = bgShockwaves[s];
             ctx.beginPath();
@@ -877,44 +890,43 @@ function initBackgroundEnvironmentEngine() {
             ctx.strokeStyle = envTheme === "cyberpunk" ? `rgba(0, 195, 255, ${shock.alpha})` :
                               envTheme === "symphony" ? `rgba(255, 204, 0, ${shock.alpha})` :
                               envTheme === "plasma" ? `rgba(255, 59, 48, ${shock.alpha})` : `rgba(175, 82, 222, ${shock.alpha})`;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            shock.radius += 12 + avgEnergy * 15;
-            shock.alpha -= 0.02;
+            shock.radius += 10 + avgEnergy * 12;
+            shock.alpha -= 0.025;
 
             if (shock.alpha <= 0 || shock.radius >= shock.maxRadius) {
                 bgShockwaves.splice(s, 1);
             }
         }
 
+        // Draw Lightweight Particles (NO shadowBlur for max CPU/GPU performance)
         bgParticles.forEach(p => {
-            p.x += p.vx * (1.0 + avgEnergy * 3.0);
-            p.y += p.vy * (1.0 + avgEnergy * 3.0);
+            p.x += p.vx * (1.0 + avgEnergy * 2.5);
+            p.y += p.vy * (1.0 + avgEnergy * 2.5);
 
             if (p.x < 0) p.x = w;
             if (p.x > w) p.x = 0;
             if (p.y < 0) p.y = h;
             if (p.y > h) p.y = 0;
 
-            const scale = p.radius * (1.0 + avgEnergy * 2.5);
+            const scale = p.radius * (1.0 + avgEnergy * 2.0);
             let colorStr = "";
 
             if (envTheme === "cyberpunk") {
-                colorStr = `hsla(${190 + avgEnergy * 80}, 100%, 60%, ${0.3 + avgEnergy * 0.5})`;
+                colorStr = `hsla(${190 + avgEnergy * 80}, 100%, 60%, 0.6)`;
             } else if (envTheme === "symphony") {
-                colorStr = `hsla(${40 + avgEnergy * 30}, 100%, 55%, ${0.3 + avgEnergy * 0.5})`;
+                colorStr = `hsla(${40 + avgEnergy * 30}, 100%, 55%, 0.6)`;
             } else if (envTheme === "cosmos") {
-                colorStr = `hsla(${270 + avgEnergy * 60}, 100%, 65%, ${0.3 + avgEnergy * 0.5})`;
+                colorStr = `hsla(${270 + avgEnergy * 60}, 100%, 65%, 0.6)`;
             } else if (envTheme === "plasma") {
-                colorStr = `hsla(${10 + avgEnergy * 50}, 100%, 60%, ${0.3 + avgEnergy * 0.5})`;
+                colorStr = `hsla(${10 + avgEnergy * 50}, 100%, 60%, 0.6)`;
             }
 
             ctx.beginPath();
             ctx.arc(p.x, p.y, scale, 0, Math.PI * 2);
             ctx.fillStyle = colorStr;
-            ctx.shadowBlur = scale * 2;
-            ctx.shadowColor = colorStr;
             ctx.fill();
         });
     }
@@ -923,7 +935,7 @@ function initBackgroundEnvironmentEngine() {
 }
 
 // ============================================================================
-// 6. MEDIAPIPE TRACKING & MULTI-MODE VISUALIZER (LISSAJOUS PHASE SCOPE)
+// 6. MEDIAPIPE TRACKING & MULTI-MODE VISUALIZER
 // ============================================================================
 function countExtendedFingersRaw(landmarks) {
     let count = 0;
@@ -1083,7 +1095,7 @@ function startVisualizer() {
 
             ctx.lineWidth = 2;
             ctx.strokeStyle = "#ffcc00";
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 4;
             ctx.shadowColor = "#ffcc00";
             ctx.beginPath();
 
@@ -1102,7 +1114,7 @@ function startVisualizer() {
         } else {
             ctx.lineWidth = 2;
             ctx.strokeStyle = "#00c3ff";
-            ctx.shadowBlur = 6;
+            ctx.shadowBlur = 4;
             ctx.shadowColor = "#00c3ff";
             ctx.beginPath();
 
@@ -1126,12 +1138,11 @@ function startVisualizer() {
 }
 
 // ============================================================================
-// 7. MODULAR TAB SWITCHING & EVENT LISTENERS
+// 7. MODULAR TAB SWITCHING & CAMERA FRAME GUARD (60 FPS OPTIMIZED)
 // ============================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initWebMIDI();
 
-    // Tab Switching Logic
     document.querySelectorAll(".rack-tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".rack-tab-btn").forEach(b => b.classList.remove("active"));
@@ -1159,9 +1170,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
     hands.onResults(onResults);
 
+    // NON-BLOCKING CAMERA FRAME DISPATCH GUARD
     const camera = new Camera(videoElement, {
         onFrame: async () => {
-            await hands.send({ image: videoElement });
+            if (isProcessingFrame) return;
+            isProcessingFrame = true;
+            try {
+                await hands.send({ image: videoElement });
+            } catch(e) {
+                console.error("[CAMERA FRAME ERROR]", e);
+            } finally {
+                isProcessingFrame = false;
+            }
         },
         width: 640,
         height: 480
@@ -1335,7 +1355,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("slider-volume")) {
         document.getElementById("slider-volume").addEventListener("input", (e) => {
             const val = parseFloat(e.target.value);
-            if (document.getElementById("val-volume")) document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
+            if (document.getElementById("val-volume").textContent) document.getElementById("val-volume").textContent = `${Math.round(val * 100)} %`;
             if (masterGain) {
                 masterGain.gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
             }
