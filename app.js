@@ -1,14 +1,19 @@
 /**
  * ============================================================================
- * AURASYNTH PRO VST3 ULTIMATE - FLAGSHIP FIXES & GRAPHICAL TILES v8.1
+ * AURASYNTH PRO VST3 ULTIMATE - PRISTINE PURE SOUND & DEFAULT FIXES (v9.5)
+ * ============================================================================
+ * Fixes:
+ *  1. Open Filter Cutoff Default (8000 Hz) for Bright, Crisp, Clear Sound
+ *  2. Rock-Solid Stable Pitch (Removed Random Wiggle Vibrato & Heavy Phase Detune)
+ *  3. Balanced Sub-Bass & Reverb Default Levels (No Muffled Mud)
+ *  4. Instant Responsive Glide (50 ms)
  * ============================================================================
  */
 
 // Global Audio Architecture
 let audioCtx = null;
 let masterGain = null;
-let compressorNode = null;
-let tubeSaturatorNode = null;
+let peakLimiterNode = null;
 let stereoPanner = null;
 let filterNode = null;
 
@@ -79,8 +84,8 @@ let currentPreset = "violin";
 let currentKey = "C";
 let currentScaleMode = "major";
 let currentOctaveShift = 0;
-let portamentoTime = 0.25;
-let filterResonance = 2.5;
+let portamentoTime = 0.05; // Fast 50ms glide
+let filterResonance = 1.0;
 
 // Arpeggiator State
 let arpMode = "off";
@@ -101,11 +106,11 @@ let activeVoices = [];
 // Telemetry State
 let leftFingersCount = 0;
 let rightMetrics = {
-    cutoffHz: 1200,
+    cutoffHz: 8000,
     vibratoDepth: 0,
-    reverbWet: 0.2,
+    reverbWet: 0.1,
     panVal: 0,
-    zDepth: 0.8,
+    zDepth: 0.5,
     prevX: 0.5,
     prevY: 0.5,
     lastTime: Date.now()
@@ -155,13 +160,14 @@ const CHORD_STRUCTURES_SCALES = {
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+// Pure Bright Normalized Harmonic Profiles
 const WAVETABLE_HARMONICS = {
-    violin: [0, 1.0, 0.85, 0.6, 0.45, 0.3, 0.2, 0.1, 0.05],
-    cs80:   [0, 1.0, 0.9, 0.7, 0.5, 0.4, 0.3, 0.25, 0.2],
-    rhodes: [0, 1.0, 0.15, 0.6, 0.05, 0.3, 0.02, 0.1],
-    guitar: [0, 1.0, 0.95, 0.3, 0.8, 0.2, 0.5, 0.1],
-    brass:  [0, 1.0, 0.95, 0.9, 0.85, 0.75, 0.5, 0.3],
-    choir:  [0, 1.0, 0.2, 0.8, 0.1, 0.5, 0.05, 0.3]
+    violin: [0, 1.0, 0.5, 0.33, 0.25, 0.2, 0.15, 0.1, 0.05],
+    cs80:   [0, 1.0, 0.5, 0.25, 0.12, 0.06, 0.03],
+    rhodes: [0, 1.0, 0.15, 0.4, 0.05, 0.1],
+    guitar: [0, 1.0, 0.6, 0.4, 0.2, 0.1],
+    brass:  [0, 1.0, 0.8, 0.6, 0.4, 0.2],
+    choir:  [0, 1.0, 0.2, 0.7, 0.1, 0.4]
 };
 
 // ============================================================================
@@ -263,20 +269,8 @@ function toggleChaosArtMode() {
 }
 
 // ============================================================================
-// 3. HIGH-FIDELITY STUDIO DSP AUDIO ENGINE
+// 3. PRISTINE AUDIO ENGINE & BRICKWALL PEAK LIMITER INIT
 // ============================================================================
-function makeDistortionCurve(amount) {
-    const k = typeof amount === 'number' ? amount : 20;
-    const n_samples = 44100;
-    const curve = new Float32Array(n_samples);
-    const deg = Math.PI / 180;
-    for (let i = 0; i < n_samples; ++i) {
-        const x = (i * 2) / n_samples - 1;
-        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-    }
-    return curve;
-}
-
 function getOrCreateWavetable(presetKey) {
     if (periodicWavesCache[presetKey]) return periodicWavesCache[presetKey];
 
@@ -289,7 +283,7 @@ function getOrCreateWavetable(presetKey) {
         imag[idx] = amp;
     });
 
-    const wave = audioCtx.createPeriodicWave(real, imag);
+    const wave = audioCtx.createPeriodicWave(real, imag, { disableNormalization: false });
     periodicWavesCache[presetKey] = wave;
     return wave;
 }
@@ -302,13 +296,10 @@ function switchInstrumentPreset(newPresetKey) {
         const newWave = getOrCreateWavetable(currentPreset);
         activeVoices.forEach(voice => {
             if (voice.oscillators) {
-                // Update main & chorus oscillators with new wavetable
                 try { voice.oscillators[0].setPeriodicWave(newWave); } catch(e){}
-                try { voice.oscillators[1].setPeriodicWave(newWave); } catch(e){}
             }
         });
 
-        // Trigger chord update if notes are active
         if (currentChordIndex >= 0) {
             const idx = currentChordIndex;
             currentChordIndex = -1;
@@ -331,16 +322,13 @@ function initAudioEngine() {
     masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
 
-    tubeSaturatorNode = audioCtx.createWaveShaper();
-    tubeSaturatorNode.curve = makeDistortionCurve(8);
-    tubeSaturatorNode.oversample = '4x';
-
-    compressorNode = audioCtx.createDynamicsCompressor();
-    compressorNode.threshold.setValueAtTime(-18, audioCtx.currentTime);
-    compressorNode.knee.setValueAtTime(12, audioCtx.currentTime);
-    compressorNode.ratio.setValueAtTime(8, audioCtx.currentTime);
-    compressorNode.attack.setValueAtTime(0.003, audioCtx.currentTime);
-    compressorNode.release.setValueAtTime(0.25, audioCtx.currentTime);
+    // Peak Limiter Node
+    peakLimiterNode = audioCtx.createDynamicsCompressor();
+    peakLimiterNode.threshold.setValueAtTime(-2.0, audioCtx.currentTime);
+    peakLimiterNode.knee.setValueAtTime(0.0, audioCtx.currentTime);
+    peakLimiterNode.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+    peakLimiterNode.attack.setValueAtTime(0.001, audioCtx.currentTime);
+    peakLimiterNode.release.setValueAtTime(0.05, audioCtx.currentTime);
 
     stereoPanner = audioCtx.createStereoPanner
         ? audioCtx.createStereoPanner()
@@ -366,22 +354,23 @@ function initAudioEngine() {
     eqTrebleNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
     eqTrebleNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
+    // Default Filter Cutoff set to 8000 Hz (Bright, Crisp & Open Sound)
     filterNode = audioCtx.createBiquadFilter();
     filterNode.type = "lowpass";
-    filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
-    filterNode.Q.setValueAtTime(filterResonance, audioCtx.currentTime);
+    filterNode.frequency.setValueAtTime(8000, audioCtx.currentTime);
+    filterNode.Q.setValueAtTime(1.0, audioCtx.currentTime);
 
     subOscGain = audioCtx.createGain();
-    subOscGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    subOscGain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Tight subtle sub-bass
 
     delayNode = audioCtx.createDelay();
-    delayNode.delayTime.setValueAtTime(0.28, audioCtx.currentTime);
+    delayNode.delayTime.setValueAtTime(0.20, audioCtx.currentTime);
 
     delayFeedback = audioCtx.createGain();
-    delayFeedback.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    delayFeedback.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
     delayGain = audioCtx.createGain();
-    delayGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    delayGain.gain.setValueAtTime(0.08, audioCtx.currentTime); // Tight clean delay
 
     analyserNode = audioCtx.createAnalyser();
     analyserNode.fftSize = 512;
@@ -392,18 +381,16 @@ function initAudioEngine() {
     eqTrebleNode.connect(stereoPanner);
 
     subOscGain.connect(stereoPanner);
-    stereoPanner.connect(tubeSaturatorNode);
-    tubeSaturatorNode.connect(compressorNode);
-    compressorNode.connect(masterGain);
+    stereoPanner.connect(masterGain);
+    masterGain.connect(peakLimiterNode);
+    peakLimiterNode.connect(analyserNode);
+    analyserNode.connect(audioCtx.destination);
 
     filterNode.connect(delayNode);
     delayNode.connect(delayFeedback);
     delayFeedback.connect(delayNode);
     delayNode.connect(delayGain);
-    delayGain.connect(tubeSaturatorNode);
-
-    masterGain.connect(analyserNode);
-    analyserNode.connect(audioCtx.destination);
+    delayGain.connect(masterGain);
 
     isAudioRunning = true;
 
@@ -417,7 +404,7 @@ function initAudioEngine() {
     startArpeggiatorScheduler();
     startVisualizer();
     initBackgroundEnvironmentEngine();
-    console.log("[AuraSynth PRO] High-Fidelity Tube DSP Engine Active.");
+    console.log("[AuraSynth PRO] Pure Pristine Audio Engine Active.");
 }
 
 function midiToFreq(midi) {
@@ -508,7 +495,7 @@ function loadPresetFromStorage() {
         currentKey = data.key || "C";
         currentScaleMode = data.scale || "major";
         currentOctaveShift = data.octave || 0;
-        portamentoTime = data.glide || 0.25;
+        portamentoTime = data.glide || 0.05;
         arpBpm = data.bpm || 120;
         arpMode = data.arpMode || "off";
         envTheme = data.envTheme || "warp";
@@ -546,10 +533,16 @@ function loadPresetFromStorage() {
 }
 
 // ============================================================================
-// 4. DUAL-OSCILLATOR CHORUS & SUB-BASS SOUND SYNTHESIS
+// 4. ROCK-SOLID PURE POLYPHONIC SYNTHESIS
 // ============================================================================
 function triggerChordTransition(fingerCount) {
-    if (!audioCtx || !isAudioRunning) return;
+    if (!audioCtx) return;
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    if (!isAudioRunning) return;
 
     if (isLoopRecording) {
         const timeOffset = audioCtx.currentTime - loopStartTime;
@@ -583,8 +576,10 @@ function triggerChordTransition(fingerCount) {
 
     if (chordData.freqs.length === 0) {
         activeVoices.forEach(voice => {
-            voice.gain.gain.setTargetAtTime(0.0001, now, 0.08);
-            setTimeout(() => voice.stop(), 200);
+            voice.gain.gain.cancelScheduledValues(now);
+            voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+            voice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.08);
+            setTimeout(() => voice.stop(), 100);
         });
         activeVoices = [];
         return;
@@ -597,8 +592,10 @@ function triggerChordTransition(fingerCount) {
 
     while (activeVoices.length > numVoicesNeeded) {
         const oldVoice = activeVoices.pop();
-        oldVoice.gain.gain.setTargetAtTime(0.0001, now, portamentoTime);
-        setTimeout(() => oldVoice.stop(), portamentoTime * 1000 + 80);
+        oldVoice.gain.gain.cancelScheduledValues(now);
+        oldVoice.gain.gain.setValueAtTime(oldVoice.gain.gain.value, now);
+        oldVoice.gain.gain.linearRampToValueAtTime(0.0001, now + portamentoTime);
+        setTimeout(() => oldVoice.stop(), portamentoTime * 1000 + 40);
     }
 
     const customWave = getOrCreateWavetable(currentPreset);
@@ -606,50 +603,33 @@ function triggerChordTransition(fingerCount) {
     targetFreqs.forEach((freq, idx) => {
         if (idx < activeVoices.length) {
             const voice = activeVoices[idx];
-            voice.oscillators.forEach((osc, i) => {
-                const detuneOffset = i === 1 ? 6 : i === 2 ? -12 : 0;
-                osc.frequency.setTargetAtTime(freq * Math.pow(2, detuneOffset / 12), now, portamentoTime);
+            voice.oscillators.forEach((osc) => {
+                osc.frequency.setTargetAtTime(freq, now, portamentoTime);
             });
-            voice.gain.gain.setTargetAtTime(0.22 / numVoicesNeeded, now, portamentoTime);
+            voice.gain.gain.cancelScheduledValues(now);
+            voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+            voice.gain.gain.linearRampToValueAtTime(0.25 / numVoicesNeeded, now + 0.03);
         } else {
             const voiceGain = audioCtx.createGain();
             voiceGain.gain.setValueAtTime(0.0001, now);
-            voiceGain.gain.setTargetAtTime(0.22 / numVoicesNeeded, now, 0.12);
+            voiceGain.gain.linearRampToValueAtTime(0.25 / numVoicesNeeded, now + 0.03);
 
+            // Rock-solid single oscillator for pure, crystal-clear pitch stability
             const osc1 = audioCtx.createOscillator();
             osc1.setPeriodicWave(customWave);
             osc1.frequency.setValueAtTime(freq, now);
 
-            const osc2 = audioCtx.createOscillator();
-            osc2.setPeriodicWave(customWave);
-            osc2.frequency.setValueAtTime(freq * 1.0035, now);
-
-            const oscSub = audioCtx.createOscillator();
-            oscSub.type = "sine";
-            oscSub.frequency.setValueAtTime(freq * 0.5, now);
-
-            const subGainLocal = audioCtx.createGain();
-            subGainLocal.gain.setValueAtTime(0.12, now);
-
             osc1.connect(voiceGain);
-            osc2.connect(voiceGain);
-            oscSub.connect(subGainLocal);
-            subGainLocal.connect(voiceGain);
-
             osc1.start(now);
-            osc2.start(now);
-            oscSub.start(now);
 
             voiceGain.connect(filterNode);
 
             activeVoices.push({
                 gain: voiceGain,
-                oscillators: [osc1, osc2, oscSub],
+                oscillators: [osc1],
                 stop: function() {
                     try {
                         osc1.stop(); osc1.disconnect();
-                        osc2.stop(); osc2.disconnect();
-                        oscSub.stop(); oscSub.disconnect();
                     } catch(e){}
                     voiceGain.disconnect();
                 }
@@ -883,7 +863,7 @@ function playArpPluck(freq, time, duration) {
 
     const pluckGain = audioCtx.createGain();
     pluckGain.gain.setValueAtTime(0.0001, time);
-    pluckGain.gain.linearRampToValueAtTime(0.28, time + 0.01);
+    pluckGain.gain.linearRampToValueAtTime(0.25, time + 0.01);
     pluckGain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
     const osc = audioCtx.createOscillator();
@@ -898,7 +878,7 @@ function playArpPluck(freq, time, duration) {
 }
 
 // ============================================================================
-// 5. RIGHT HAND EXPRESSION & GESTURE ENVIRONMENT SWITCHER
+// 5. RIGHT HAND EXPRESSION (CLEAN & PURE - NO SHAKY DETUNE)
 // ============================================================================
 function processRightHandExpression(landmarks) {
     if (!audioCtx || !isAudioRunning) return;
@@ -915,8 +895,9 @@ function processRightHandExpression(landmarks) {
         cycleNextEnvironment();
     }
 
+    // Cutoff Filter: Opens up smoothly from 800 Hz to 12,000 Hz based on Y position
     const normY = Math.max(0, Math.min(1, 1.0 - indexTip.y));
-    const targetCutoff = 150 + Math.pow(normY, 2.2) * 11850;
+    const targetCutoff = 800 + Math.pow(normY, 2.0) * 11200;
     filterNode.frequency.setTargetAtTime(targetCutoff, audioCtx.currentTime, 0.06);
     rightMetrics.cutoffHz = Math.round(targetCutoff);
     sendMidiCC(74, Math.round(normY * 127));
@@ -934,24 +915,11 @@ function processRightHandExpression(landmarks) {
     rightMetrics.zDepth = zDepthNorm;
     delayNode.delayTime.setTargetAtTime(0.15 + zDepthNorm * 0.3, audioCtx.currentTime, 0.1);
 
-    const dx = indexTip.x - rightMetrics.prevX;
-    const dy = indexTip.y - rightMetrics.prevY;
-    const speed = Math.sqrt(dx * dx + dy * dy) / dt;
-    const vibratoDepth = Math.min(1.0, speed / 3.5);
-    rightMetrics.vibratoDepth = Math.round(vibratoDepth * 100);
-
-    activeVoices.forEach(voice => {
-        voice.oscillators.forEach(osc => {
-            const detuneWiggle = (Math.random() - 0.5) * vibratoDepth * 40;
-            osc.detune.setTargetAtTime(detuneWiggle, audioCtx.currentTime, 0.04);
-        });
-    });
-
     const pinchDist = Math.sqrt(
         Math.pow(indexTip.x - thumbTip.x, 2) + Math.pow(indexTip.y - thumbTip.y, 2)
     );
     const reverbWet = Math.max(0, Math.min(1, 1.0 - pinchDist * 4.0));
-    delayGain.gain.setTargetAtTime(reverbWet * 0.45, audioCtx.currentTime, 0.1);
+    delayGain.gain.setTargetAtTime(reverbWet * 0.3, audioCtx.currentTime, 0.1);
     rightMetrics.reverbWet = Math.round(reverbWet * 100);
     sendMidiCC(91, Math.round(reverbWet * 127));
 
@@ -964,8 +932,8 @@ function processRightHandExpression(landmarks) {
     if (document.getElementById("gauge-depth")) document.getElementById("gauge-depth").textContent = zDepthNorm < 0.4 ? "NEAR" : zDepthNorm > 0.7 ? "FAR" : "MID";
     if (document.getElementById("bar-depth")) document.getElementById("bar-depth").style.width = `${Math.round(zDepthNorm * 100)}%`;
 
-    if (document.getElementById("gauge-vibrato")) document.getElementById("gauge-vibrato").textContent = `${rightMetrics.vibratoDepth} %`;
-    if (document.getElementById("bar-vibrato")) document.getElementById("bar-vibrato").style.width = `${rightMetrics.vibratoDepth}%`;
+    if (document.getElementById("gauge-vibrato")) document.getElementById("gauge-vibrato").textContent = `STABLE (100%)`;
+    if (document.getElementById("bar-vibrato")) document.getElementById("bar-vibrato").style.width = `100%`;
 
     const panText = panVal < -0.1 ? `L ${Math.abs(Math.round(panVal * 100))}%` :
                     panVal > 0.1 ? `R ${Math.round(panVal * 100)}%` : "CENTER";
@@ -1372,7 +1340,6 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById("btn-next-env-gesture").addEventListener("click", () => cycleNextEnvironment());
     }
 
-    // PRESET PILL CLICK LISTENER (INSTANT REAL-TIME INSTRUMENT SWITCHING)
     document.querySelectorAll(".preset-pill").forEach(pill => {
         pill.addEventListener("click", () => {
             document.querySelectorAll(".preset-pill").forEach(p => p.classList.remove("active"));
