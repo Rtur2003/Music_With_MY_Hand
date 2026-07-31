@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AURASYNTH PRO VST3 ULTIMATE - AUDIO-REACTIVE ENVIRONMENT & VINTAGE WOOD
+   AURASYNTH PRO VST3 ULTIMATE - FLAGSHIP EDITION STYLING
    ========================================================================== */
 
 :root {
@@ -45,7 +45,6 @@ html, body {
     position: relative;
 }
 
-/* AUDIO-REACTIVE CANVAS BACKGROUND */
 #reactive-bg-canvas {
     position: absolute;
     top: 0;
@@ -56,7 +55,6 @@ html, body {
     pointer-events: none;
 }
 
-/* VINTAGE SYNTH RACK CONTAINER WITH MAHOGANY WOOD CHEEKS */
 .vst-rack-container {
     width: 98vw;
     max-width: 1420px;
@@ -83,13 +81,8 @@ html, body {
     flex-shrink: 0;
 }
 
-.wood-left {
-    border-right: 2px solid #000;
-}
-
-.wood-right {
-    border-left: 2px solid #000;
-}
+.wood-left { border-right: 2px solid #000; }
+.wood-right { border-left: 2px solid #000; }
 
 .chassis-inner {
     flex: 1;
@@ -101,7 +94,6 @@ html, body {
     background: linear-gradient(180deg, rgba(22, 24, 34, 0.95), rgba(15, 17, 24, 0.98));
 }
 
-/* HEADER */
 .vst-header {
     display: flex;
     justify-content: space-between;
@@ -127,7 +119,6 @@ html, body {
 .vst-power-btn { background: linear-gradient(180deg, #2b3245, #1d2230); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 7px 12px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-weight: 700; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .vst-help-btn { background: #171a24; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-secondary); padding: 7px 10px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.72rem; cursor: pointer; white-space: nowrap; }
 
-/* HELP DRAWER */
 .vst-help-drawer { background: #171b26; border: 1px solid var(--led-gold); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 8px; position: absolute; top: 60px; left: 16px; right: 16px; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
 .vst-help-drawer.hidden { display: none; }
 .drawer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 4px; }
@@ -138,7 +129,6 @@ html, body {
 .guide-col ul { list-style: none; display: flex; flex-direction: column; gap: 2px; }
 .guide-col li { font-size: 0.7rem; color: var(--text-secondary); }
 
-/* GRID MODULES */
 .vst-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 100%; }
 .vst-module { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
 
@@ -147,7 +137,6 @@ html, body {
 .module-tag { font-size: 0.58rem; font-family: var(--font-mono); padding: 2px 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); white-space: nowrap; }
 .module-tag.active { background: rgba(0, 195, 255, 0.15); color: var(--led-cyan); border: 1px solid rgba(0, 195, 255, 0.3); }
 
-/* CHORD MATRIX */
 .chord-matrix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
 .chord-box { background: #12151f; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: var(--radius-sm); padding: 6px; overflow: hidden; }
 .chord-box.active { border-color: var(--led-cyan); background: #182030; box-shadow: 0 0 10px rgba(0, 195, 255, 0.2); }
@@ -158,7 +147,6 @@ html, body {
 .chord-main-name { font-size: 0.8rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chord-freqs { font-size: 0.62rem; font-family: var(--font-mono); color: var(--led-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* TELEMETRY GAUGES */
 .telemetry-rack { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
 .gauge-card { background: #12151f; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: var(--radius-sm); padding: 6px 8px; overflow: hidden; }
 .gauge-label { font-size: 0.58rem; font-family: var(--font-mono); color: var(--text-muted); display: block; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -174,9 +162,14 @@ html, body {
 .btn-rec.recording { background: var(--led-red); box-shadow: 0 0 10px var(--led-red); }
 .btn-play.playing { background: var(--led-green); color: #000; box-shadow: 0 0 10px var(--led-green); }
 .btn-metro.active { background: var(--led-gold); color: #000; box-shadow: 0 0 8px var(--led-gold); }
+.btn-freeze.frozen { background: var(--led-cyan); color: #000; box-shadow: 0 0 10px var(--led-cyan); }
 .btn-clear:hover { background: #331518; color: var(--led-red); }
 .btn-wav { background: linear-gradient(180deg, #7928ca, #4a1380); }
 .looper-status { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; color: var(--led-gold); margin-left: auto; }
+
+.preset-btn-group { display: flex; gap: 4px; }
+.vst-btn-nano { background: #181c28; border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; padding: 4px 8px; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+.vst-btn-nano:hover { background: #252c3f; border-color: var(--led-cyan); }
 
 .sub-controls-row { display: flex; align-items: center; gap: 10px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
 .sub-knob-unit { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
