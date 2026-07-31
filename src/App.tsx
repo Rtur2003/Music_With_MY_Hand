@@ -1,24 +1,34 @@
 /* ═══════════════════════════════════════════════════════════════════
    AuraSynth Pro — Main App Component
-   Instant start sequence without blocking AudioContext initialization
+   Persistent Stage container & camera feed (zero stream disconnects on tab switch)
    ═══════════════════════════════════════════════════════════════════ */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useHandTracking } from './tracking/useHandTracking';
-import { SynthMode } from './modes/SynthMode';
-import { ConductorMode } from './modes/ConductorMode';
+import { Stage } from './components/Stage';
 import { Controls } from './components/Controls';
+import { ChordDisplay } from './components/ChordDisplay';
+import { PianoRoll } from './components/PianoRoll';
+import { Recorder } from './components/Recorder';
+import { ConductorHud } from './components/ConductorHud';
+import { OrchestraVisualizer } from './components/OrchestraVisualizer';
+
 import { getSynthEngine } from './audio/SynthEngine';
 import { getOrchestraEngine } from './audio/OrchestraEngine';
+import { buildChord, fingerCountToScaleDegree, fingerCountToComplexity, keyNameToIndex } from './audio/chords';
+import { processHandGesture } from './tracking/fingerCount';
+import { ConductorProcessor } from './tracking/conductorGestures';
+import { ORCHESTRAL_PIECES } from './audio/pieces';
 import { generateMidiBlob, downloadBlob, type RecordedNote } from './utils/midiExport';
 
 export type AppMode = 'synth' | 'conductor';
 
 export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Initialize hand tracking once user clicks start
+  // Persistent hand tracking hook
   const { status, error, handsState } = useHandTracking(videoRef, hasStarted);
 
   const [mode, setMode] = useState<AppMode>('synth');
@@ -31,17 +41,39 @@ export default function App() {
   const [isMinorLocked, setIsMinorLocked] = useState(false);
   const recordedNotesRef = useRef<RecordedNote[]>([]);
 
-  const handleStart = () => {
-    // Open UI immediately so page never hangs on splash screen
-    setHasStarted(true);
+  // Active synth chord state
+  const [currentChordName, setCurrentChordName] = useState<string | null>(null);
+  const [currentNotes, setCurrentNotes] = useState<string[]>([]);
+  const [scaleDegreeLabel, setScaleDegreeLabel] = useState<string>('');
+  const [isMinor, setIsMinor] = useState(false);
+  const lastChordRef = useRef<string | null>(null);
+  const chordStartTimeRef = useRef<number>(0);
 
-    // Initialize audio engines asynchronously
+  // Conductor state
+  const conductorProcessorRef = useRef(new ConductorProcessor());
+  const [selectedPieceIndex, setSelectedPieceIndex] = useState(0);
+  const [conductorState, setConductorState] = useState({
+    bpm: 120,
+    dynamics: 0.5,
+    sectionFocus: 0,
+    beatDetected: false,
+    crescendo: false,
+    diminuendo: false,
+    rightHandVelocity: 0,
+    beatInMeasure: 0,
+  });
+
+  const synthEngine = getSynthEngine();
+  const orchestraEngine = getOrchestraEngine();
+
+  const handleStart = () => {
+    setHasStarted(true);
     setTimeout(async () => {
       try {
-        await getSynthEngine().start();
-        await getOrchestraEngine().start();
+        await synthEngine.start();
+        await orchestraEngine.start();
       } catch (err) {
-        console.warn('[AudioStart] Non-critical audio init warning:', err);
+        console.warn('[AudioStart] Non-critical init warning:', err);
       }
     }, 50);
   };
@@ -49,18 +81,18 @@ export default function App() {
   const handleArpToggle = () => {
     const next = !isArpEnabled;
     setIsArpEnabled(next);
-    getSynthEngine().setArpEnabled(next);
+    synthEngine.setArpEnabled(next);
   };
 
   const handleArpSpeedChange = (speed: 'slow' | 'normal' | 'fast') => {
     setArpSpeed(speed);
-    getSynthEngine().setArpSpeed(speed);
+    synthEngine.setArpSpeed(speed);
   };
 
   const handleBassToggle = () => {
     const next = !isBassEnabled;
     setIsBassEnabled(next);
-    getSynthEngine().setBassEnabled(next);
+    synthEngine.setBassEnabled(next);
   };
 
   const handleExportMidi = () => {
@@ -72,7 +104,110 @@ export default function App() {
     downloadBlob(blob, `aurasynth-performance-${Date.now()}.mid`);
   };
 
+  // Conductor piece change
+  useEffect(() => {
+    if (hasStarted) {
+      orchestraEngine.setPiece(selectedPieceIndex);
+    }
+  }, [selectedPieceIndex, hasStarted]);
+
   const { left, right } = handsState;
+
+  // Real-time Gesture Frame Processing (Runs smoothly for both modes)
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    if (mode === 'synth') {
+      orchestraEngine.pauseConducting();
+
+      if (!left && !right) {
+        synthEngine.releaseAll();
+        setCurrentChordName(null);
+        setCurrentNotes([]);
+        return;
+      }
+
+      const keyIndex = keyNameToIndex(currentKey);
+      const leftGesture = left ? processHandGesture(left as any, false) : null;
+      const rightGesture = right ? processHandGesture(right as any, true) : null;
+
+      if (leftGesture && rightGesture && !leftGesture.isFist) {
+        let scaleDegree = fingerCountToScaleDegree(leftGesture.fingerCount);
+        if (leftGesture.isVI) scaleDegree = 5;
+        if (leftGesture.isVII) scaleDegree = 6;
+
+        if (scaleDegree >= 0) {
+          const minorMode = isMinorLocked ? true : leftGesture.wristTilt < -0.15;
+          setIsMinor(minorMode);
+
+          const complexity = fingerCountToComplexity(rightGesture.fingerCount);
+          const chord = buildChord(keyIndex, scaleDegree, minorMode, complexity, 0);
+
+          setCurrentChordName(chord.name);
+          setCurrentNotes(chord.notes);
+          setScaleDegreeLabel(getRomanNumeral(scaleDegree, minorMode));
+
+          synthEngine.playChord(chord.notes);
+          if (isBassEnabled) synthEngine.playBass(chord.bassNote);
+
+          const volumeNorm = 1 - Math.max(0, Math.min(1, (rightGesture.centerY - 0.15) / 0.7));
+          synthEngine.setVolume(volumeNorm);
+
+          const tiltNorm = Math.max(0, Math.min(1, (rightGesture.wristTilt + 0.5) / 1.0));
+          synthEngine.setFilterFrequency(tiltNorm);
+
+          const now = performance.now() / 1000;
+          if (chord.name !== lastChordRef.current) {
+            if (lastChordRef.current && chordStartTimeRef.current > 0) {
+              const duration = now - chordStartTimeRef.current;
+              currentNotes.forEach((n) => {
+                recordedNotesRef.current.push({ note: n, startTime: chordStartTimeRef.current, duration });
+              });
+            }
+            lastChordRef.current = chord.name;
+            chordStartTimeRef.current = now;
+          }
+        } else {
+          synthEngine.releaseAll();
+          setCurrentChordName(null);
+          setCurrentNotes([]);
+        }
+      } else {
+        synthEngine.releaseAll();
+        setCurrentChordName(null);
+        setCurrentNotes([]);
+      }
+    } else if (mode === 'conductor') {
+      synthEngine.releaseAll();
+
+      if (!left && !right) {
+        orchestraEngine.pauseConducting();
+        return;
+      }
+
+      orchestraEngine.startConducting();
+      const timestamp = performance.now();
+      const state = conductorProcessorRef.current.process(left, right, timestamp);
+
+      orchestraEngine.setBpm(state.bpm);
+      orchestraEngine.setDynamics(state.dynamics);
+      orchestraEngine.setSectionFocus(state.sectionFocus);
+
+      setConductorState((prev) => {
+        const bpmChanged = prev.bpm !== state.bpm;
+        const dynamicsChanged = Math.abs(prev.dynamics - state.dynamics) > 0.08;
+        const focusChanged = prev.sectionFocus !== state.sectionFocus;
+        const beatChanged = prev.beatDetected !== state.beatDetected;
+        const crescChanged = prev.crescendo !== state.crescendo;
+        const dimChanged = prev.diminuendo !== state.diminuendo;
+
+        if (!bpmChanged && !dynamicsChanged && !focusChanged && !beatChanged && !crescChanged && !dimChanged) {
+          return prev;
+        }
+        return state;
+      });
+    }
+  }, [left, right, mode, currentKey, isMinorLocked, isBassEnabled, hasStarted]);
 
   return (
     <div className="app-root">
@@ -90,7 +225,7 @@ export default function App() {
         </div>
       ) : (
         <>
-          {/* Single Unified Glassmorphic Header Bar */}
+          {/* Header Controls */}
           <Controls
             mode={mode}
             onModeChange={setMode}
@@ -109,23 +244,54 @@ export default function App() {
             error={error}
           />
 
-          {/* Active Mode View */}
-          {mode === 'synth' ? (
-            <SynthMode
-              videoRef={videoRef}
-              leftHand={left}
-              rightHand={right}
-              currentKey={currentKey}
-              isArpEnabled={isArpEnabled}
-              isBassEnabled={isBassEnabled}
-              isMinorLocked={isMinorLocked}
-              recordedNotesRef={recordedNotesRef}
-            />
-          ) : (
-            <ConductorMode videoRef={videoRef} leftHand={left} rightHand={right} />
-          )}
+          {/* SINGLE PERSISTENT STAGE (Camera & Video never disconnect on tab switch) */}
+          <Stage
+            videoRef={videoRef}
+            stageContainerRef={stageContainerRef}
+            leftHand={left}
+            rightHand={right}
+            analyser={mode === 'synth' ? synthEngine.getAnalyser() : undefined}
+            chordColor={mode === 'synth' ? '#00ffcc' : '#ffaa00'}
+            showHandIndicators={mode === 'synth'}
+          >
+            {mode === 'synth' ? (
+              <>
+                <ChordDisplay
+                  chordName={currentChordName}
+                  notes={currentNotes}
+                  scaleDegree={scaleDegreeLabel}
+                  isMinor={isMinor}
+                  leftHandActive={!!left}
+                  rightHandActive={!!right}
+                />
+                <PianoRoll activeNotes={currentNotes} />
+                <Recorder stageContainerRef={stageContainerRef} />
+              </>
+            ) : (
+              <>
+                <ConductorHud
+                  conductorState={conductorState}
+                  currentPiece={ORCHESTRAL_PIECES[selectedPieceIndex]}
+                  pieceOptions={ORCHESTRAL_PIECES}
+                  onPieceSelect={setSelectedPieceIndex}
+                />
+                <OrchestraVisualizer
+                  sectionFocus={conductorState.sectionFocus}
+                  beatDetected={conductorState.beatDetected}
+                  rightHandVelocity={conductorState.rightHandVelocity}
+                />
+              </>
+            )}
+          </Stage>
         </>
       )}
     </div>
   );
+}
+
+function getRomanNumeral(deg: number, isMinor: boolean): string {
+  const romansMajor = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
+  const romansMinor = ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'];
+  const list = isMinor ? romansMinor : romansMajor;
+  return list[deg] || 'I';
 }
